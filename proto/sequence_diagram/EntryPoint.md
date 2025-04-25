@@ -13,6 +13,8 @@
 - → : 호출(동기)
 
 ## Reference
+- [Application -> NiLayer 패킷 전달 흐름 Sequence Diagram](./ApplicationLayer_to_NiLayer.md)
+- [NiLayer -> Application 패킷 전달 흐름 Sequence Diagram](./NiLayer_to_ApplicationLayer.md)
 
 ## Diagram
 ```mermaid
