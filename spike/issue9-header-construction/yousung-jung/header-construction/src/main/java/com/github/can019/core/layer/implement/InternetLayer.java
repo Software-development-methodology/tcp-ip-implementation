@@ -5,12 +5,12 @@ import com.github.can019.core.layer.Layer;
 
 public class InternetLayer extends Layer {
     @Override
-    public void send(Chunk chunk) {
-
+    protected Chunk castToSupportedChunk(Chunk chunk) {
+        return null;
     }
 
     @Override
-    public void receive(Chunk chunk) {
-
+    protected Chunk process(Chunk chunk) {
+        return null;
     }
 }

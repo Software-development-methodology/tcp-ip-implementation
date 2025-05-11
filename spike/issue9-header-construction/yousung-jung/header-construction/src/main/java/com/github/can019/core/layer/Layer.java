@@ -6,8 +6,16 @@ public abstract class Layer {
     protected Layer upperLayer;
     protected Layer lowerLayer;
 
-    public abstract void send(Chunk chunk);
-    public abstract void receive(Chunk chunk);
+    //public abstract void send(Chunk chunk);
+    public final void receive(Chunk chunk) {
+        Chunk newChunk = castToSupportedChunk(chunk);
+
+        this.upperLayer.receive(process(newChunk));
+    }
+
+    protected abstract Chunk castToSupportedChunk(Chunk chunk);
+
+    protected abstract Chunk process(Chunk chunk);
 
     public void setLowerLayer(Layer lowerLayer) {
         this.lowerLayer = lowerLayer;

@@ -4,13 +4,14 @@ import com.github.can019.core.data.Chunk;
 import com.github.can019.core.layer.Layer;
 
 public class EthernetLayer extends Layer {
-    @Override
-    public void send(Chunk chunk) {
 
+    @Override
+    protected Chunk castToSupportedChunk(Chunk chunk) {
+        return null;
     }
 
     @Override
-    public void receive(Chunk chunk) {
-
+    protected Chunk process(Chunk chunk) {
+        return null;
     }
 }

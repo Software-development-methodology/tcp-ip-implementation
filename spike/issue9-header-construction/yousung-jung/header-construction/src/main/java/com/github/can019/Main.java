@@ -13,7 +13,5 @@ public class Main {
         ethernetLayer.setUpperLayer(internetLayer);
         internetLayer.setLowerLayer(ethernetLayer);
 
-
-        ethernetLayer.receive(new Chunk());
     }
 }
