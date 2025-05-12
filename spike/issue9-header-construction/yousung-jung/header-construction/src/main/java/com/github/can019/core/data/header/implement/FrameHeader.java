@@ -6,4 +6,8 @@ public class FrameHeader extends Header {
     public FrameHeader(Header header) {
         super(header);
     }
+
+    public void frameHeaderMethod() {
+
+    }
 }

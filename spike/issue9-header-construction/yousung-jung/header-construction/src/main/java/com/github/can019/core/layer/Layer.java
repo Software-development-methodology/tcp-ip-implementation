@@ -9,7 +9,7 @@ public abstract class Layer {
     //public abstract void send(Chunk chunk);
     public final void receive(Chunk chunk) {
         Chunk newChunk = castToSupportedChunk(chunk);
-
+        process(newChunk);
         this.upperLayer.receive(process(newChunk));
     }
 
