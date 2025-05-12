@@ -31,7 +31,7 @@ class EthernetLayerTest {
 
         Chunk afterCastChunk = ethernetLayer.castToSupportedChunk(beforeCastChunk);
 
-        assertThat(afterCastChunk)
+        assertThat(afterCastChunk.getHeader())
                 .as("afterCastChunk should be instance of FrameHeader")
                 .isInstanceOf(FrameHeader.class);
     }
