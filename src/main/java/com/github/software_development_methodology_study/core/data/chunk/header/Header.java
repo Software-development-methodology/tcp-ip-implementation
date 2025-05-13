@@ -6,10 +6,10 @@ public abstract class Header implements FixedSize {
     protected final Byte[] bytes;
 
     protected Header() {
-        this(new Byte[0], 0);
+        this(new Byte[0]);
     }
 
-    protected Header(Byte[] bytes, int he) {
+    protected Header(Byte[] bytes) {
         this.bytes = bytes;
     }
 
