@@ -1,5 +1,6 @@
 package com.github.software_development_methodology_study.core.data.chunk;
 
+import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
 
@@ -17,7 +18,7 @@ import com.github.software_development_methodology_study.core.data.chunk.payload
  * @version 1.0
  * @author jeong-yuseong
  */
-public final class Chunk <T> {
+public final class Chunk <T extends Header> {
     private T header;
     private Payload payload;
 

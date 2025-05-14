@@ -1,6 +1,8 @@
 package com.github.software_development_methodology_study.core.data.chunk.header;
 
 
+import com.github.software_development_methodology_study.core.data.contract.FixedSize;
+
 /**
  *
  * 빈 헤더.
@@ -11,7 +13,7 @@ package com.github.software_development_methodology_study.core.data.chunk.header
  * @version 1.0
  * @author jeong-yuseong
  */
-public class EmptyHeader extends Header{
+public class EmptyHeader extends Header implements FixedSize {
     @Override
     public int expectedLength() {
         return 0;

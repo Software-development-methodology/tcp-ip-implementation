@@ -12,7 +12,7 @@ import com.github.software_development_methodology_study.core.data.contract.Fixe
  * @version 1.0
  * @author jeong-yuseong
  */
-public abstract class Header implements FixedSize {
+public abstract class Header {
     protected final Byte[] bytes;
 
     protected Header() {
