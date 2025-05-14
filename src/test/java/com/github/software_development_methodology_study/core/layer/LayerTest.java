@@ -23,4 +23,23 @@ class LayerTest {
                 () -> assertTrue(testLayer.newHeader instanceof TestHeader)
         );
     }
+
+    @Test
+    void 두_레이어끼리_receive_체인_시_형변환_없이_타입이_변경되어야한다() {
+        Chunk<Header> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
+
+        TestLayer testLayer = new TestLayer();
+        TestLayer2 testLayer2 = new TestLayer2();
+        testLayer2.setUpperLayer(testLayer);
+
+        testLayer2.receive(chunk);
+
+        assertAll(
+                () -> assertTrue(testLayer.receivedHeader instanceof EmptyHeader),
+                () -> assertTrue(testLayer.newHeader instanceof TestHeader)
+        );
+
+
+    }
 }
