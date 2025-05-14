@@ -32,7 +32,7 @@ public class EthernetLayer extends Layer {
     public Chunk send(Chunk chunk) {
         // 정보 받아오기 chunk.get(...)
         Header ethernetHeader = new EthernetHeader();
-        Chunk ethernetFrame = new Chunk(ethernetHeader, chunk.concat());
+        Chunk<EthernetHeader> ethernetFrame = new Chunk(ethernetHeader, chunk.concat());
 
         // super.lowerLayer.send(ethernetFrame);
 
@@ -41,7 +41,9 @@ public class EthernetLayer extends Layer {
 
     public Chunk receive(Chunk chunk) {
         // 정보 받아오기 chunk.get(...)
-        Chunk ethernetFrame = parseHeader(chunk.getData());
+        Chunk<EthernetHeader> ethernetFrame = parseHeader(chunk.getData());
+        EthernetHeader ethernetHeader = ethernetFrame.getHeader();
+        System.out.println("Test Frame : " + Arrays.toString(ethernetHeader.getDestMACAddr()));
 
         return super.upperLayer.receive(ethernetFrame);
     }
@@ -50,6 +52,6 @@ public class EthernetLayer extends Layer {
         // parsing logic
         byte[] data = Arrays.copyOfRange(payload, 0, 4);
 
-        return new Chunk(new EthernetHeader(), data);
+        return new Chunk<>(new EthernetHeader(), data);
     }
 }

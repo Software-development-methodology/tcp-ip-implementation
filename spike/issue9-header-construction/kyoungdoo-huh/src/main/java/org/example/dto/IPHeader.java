@@ -23,6 +23,10 @@ public class IPHeader implements Header{
         headerLength = new byte[] {0, 1, 1};
     }
 
+    public byte[] getIpVersion() {
+        return ipVersion;
+    }
+
     @Override
     public byte[] toByteArr() {
         return Util.mergeByteArrays(ipVersion, headerLength);

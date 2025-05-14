@@ -32,14 +32,16 @@ public class InternetLayer extends Layer {
     public Chunk send(Chunk chunk) {
         // 정보 받아오기 chunk.get(...)
         Header ipHeader = new IPHeader();
-        Chunk ipPacket = new Chunk(ipHeader, chunk.concat());
+        Chunk<IPHeader> ipPacket = new Chunk(ipHeader, chunk.concat());
 
         return super.lowerLayer.send(ipPacket);
     }
 
     public Chunk receive(Chunk chunk) {
         // 정보 받아오기 chunk.get(...)
-        Chunk ipPacket = parseHeader(chunk.getData());
+        Chunk<IPHeader> ipPacket = parseHeader(chunk.getData());
+        IPHeader ipHeader = ipPacket.getHeader();
+        System.out.println("Test Packet : " + Arrays.toString(ipHeader.getIpVersion()));
 
         // super.upperLayer.receive(ipPacket);
 
@@ -50,6 +52,6 @@ public class InternetLayer extends Layer {
         // parsing logic
         byte[] data = Arrays.copyOfRange(payload, 0, 4);
 
-        return new Chunk(new IPHeader(), data);
+        return new Chunk<>(new IPHeader(), data);
     }
 }

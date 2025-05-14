@@ -2,15 +2,15 @@ package org.example.dto;
 
 import java.util.Arrays;
 
-public class Chunk {
-    private Header header;
+public class Chunk<H extends Header> {
+    private H header;
     private byte[] data;
 
     public Chunk(byte[] data) {
         this.data = data;
     }
 
-    public Chunk(Header header, byte[] data) {
+    public Chunk(H header, byte[] data) {
         this.header = header;
         this.data = data;
     }
@@ -23,7 +23,7 @@ public class Chunk {
         return res;
     }
 
-    public Header getHeader() {
+    public H getHeader() {
         return this.header;
     }
 

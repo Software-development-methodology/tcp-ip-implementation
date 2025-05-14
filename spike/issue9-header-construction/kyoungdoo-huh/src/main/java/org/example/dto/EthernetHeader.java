@@ -13,6 +13,10 @@ public class EthernetHeader implements Header {
         ethernetType = new byte[] {1, 0};
     }
 
+    public byte[] getDestMACAddr() {
+        return destMACAddr;
+    }
+
     @Override
     public byte[] toByteArr() {
         return Util.mergeByteArrays(destMACAddr, srcMACAddr, ethernetType);
