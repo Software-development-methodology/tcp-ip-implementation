@@ -1,19 +1,9 @@
-### 🧪 Spike 목표
-> TCP/IP 4계층 구현에서 Chunk 구조 잡기
+package mockLayer;
 
-### 🔨 작업 내용
-- 각 Layer는 자신이 사용하는 Header만 Chunk에 주입
-- Chunk 내에서 Payload, Header 핸들링
-    - 수신 시 Chunk 내 Payload, Header 분리 작업 및 테스트
-    - 송신 시 Chunk 내 Payload, Header 병합 작업 및 테스트
-- Byte[] <-> long 구현 및 테스트
+import chunk.Chunk;
+import header.FrameHeader;
+import header.Header;
 
-### 🤔 고민/이슈
-- Layer에서 Header 구체 클래스의 메서드 사용 불가
-    - Generic을 사용하면 될 것 같기두
-
-### 🧹 기타
-```java
 public class MockLayer {
     private MockLayer upperLayer;
     private MockLayer lowerLayer;
@@ -38,4 +28,3 @@ public class MockLayer {
         upperLayer.receive(chunk);
     }
 }
-```
