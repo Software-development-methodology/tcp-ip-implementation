@@ -17,8 +17,6 @@ import com.github.software_development_methodology_study.core.data.chunk.payload
 public abstract class Layer<T extends Header> {
     protected Layer<? extends Header> lowerLayer;
     protected Layer<? extends Header> upperLayer;
-    protected T header;
-    protected Payload payload;
 
     public void setUpperLayer(Layer<? extends Header> upperLayer) {
         this.upperLayer = upperLayer;
@@ -34,22 +32,6 @@ public abstract class Layer<T extends Header> {
 
     public Layer<? extends Header> getLowerLayer() {
         return lowerLayer;
-    }
-
-    public Payload getPayload() {
-        return payload;
-    }
-
-    public void setPayload(Payload payload) {
-        this.payload = payload;
-    }
-
-    public void setHeader(T header) {
-        this.header = header;
-    }
-
-    public T getHeader() {
-        return header;
     }
 
     @SuppressWarnings("unchecked")
