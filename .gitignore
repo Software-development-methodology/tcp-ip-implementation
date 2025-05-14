@@ -1,0 +1,17 @@
+# IntelliJ-specific files
+.idea/
+*.iml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Build output
+/out/
+/build/
+/target/
+
+# Gradle or Maven wrappers
+.gradle/
+/.mvn/
+!gradle/wrapper/gradle-wrapper.jar
