@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
       - '**'
+      - '!docs'
       # - '*'         # matches every branch that doesn't contain a '/'
       # - '*/*'       # matches every branch containing a single '/'
       # - '**'        # matches every branch
@@ -10,6 +11,7 @@ on:
 
 jobs:
   gradle-task:
+    if: "!contains(github.head_ref, 'spike')" # 제외하고자 하는 branch는 glob 적용불가, if에 작성
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
