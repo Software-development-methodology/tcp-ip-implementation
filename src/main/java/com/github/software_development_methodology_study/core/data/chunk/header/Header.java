@@ -1,6 +1,5 @@
 package com.github.software_development_methodology_study.core.data.chunk.header;
 
-import com.github.software_development_methodology_study.core.data.contract.FixedSize;
 
 /**
  * 네트워크 전송 계층에서 사용되는 공통 헤더 추상 클래스입니다.
