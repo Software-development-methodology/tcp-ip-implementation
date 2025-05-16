@@ -39,7 +39,5 @@ class LayerTest {
                 () -> assertTrue(testLayer.receivedHeader instanceof EmptyHeader),
                 () -> assertTrue(testLayer.newHeader instanceof TestHeader)
         );
-
-
     }
 }

@@ -17,9 +17,4 @@ public class TestLayer2 extends Layer<EmptyHeader>{
     public void send(Chunk<Header> chunk) {
 
     }
-
-
-    public void process(Chunk<TestHeader> chunk) {
-
-    }
 }
