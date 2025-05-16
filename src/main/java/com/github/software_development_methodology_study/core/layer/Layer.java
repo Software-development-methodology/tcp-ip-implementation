@@ -34,11 +34,6 @@ public abstract class Layer<T extends Header> {
         return lowerLayer;
     }
 
-    @SuppressWarnings("unchecked")
-    protected Chunk<T> cast(Chunk<? extends Header> chunk) {
-        return (Chunk<T>) chunk;
-    }
-
     /**
      * 하위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
