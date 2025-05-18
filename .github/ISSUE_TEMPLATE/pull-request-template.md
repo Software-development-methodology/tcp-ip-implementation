@@ -1,5 +1,5 @@
 ---
-name: 'Pull request template  '
+name: Pull request template
 about: Describe this issue template's purpose here.
 title: "[Pull Request]"
 labels: ''
