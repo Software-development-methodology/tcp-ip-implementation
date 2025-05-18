@@ -1,17 +1,27 @@
 package com.github.software_development_methodology_study.core.layer;
 
+import com.github.software_development_methodology_study.common.util.DataType;
+import com.github.software_development_methodology_study.core.data.chunk.Chunk;
+import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
+import com.github.software_development_methodology_study.core.data.chunk.header.Header;
+import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static com.github.software_development_methodology_study.common.util.DataType.StringToByteArray;
 
 public class ChatUI extends JFrame {
 
   private JTextArea chatArea;
   private JTextField inputField;
   private JButton sendButton;
+  private final Layer<?> guiLayer;
 
-  public ChatUI() {
+  public ChatUI(Layer<? extends Header> guiLayer) {
+    this.guiLayer = guiLayer;
     setTitle("Chat");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(400, 400);
@@ -57,6 +67,12 @@ public class ChatUI extends JFrame {
     String message = inputField.getText().trim();
     if (!message.isEmpty()) {
       chatArea.append("[send] " + message + "\n");
+
+      Chunk<Header> chunk = new Chunk<>();
+      chunk.setHeader(new EmptyHeader());
+      chunk.setPayload(new Payload(StringToByteArray(message)));
+
+      guiLayer.send(chunk);
       // 시뮬레이션용 수신 메시지
 //      chatArea.append("[receive] 네\n");
       inputField.setText("");
@@ -64,6 +80,8 @@ public class ChatUI extends JFrame {
   }
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(ChatUI::new);
+    GUILayer guiLayer1 = new GUILayer();
+    //guiLayer1.setLowerLayer();
+    SwingUtilities.invokeLater(() -> new ChatUI(guiLayer1));
   }
 }
