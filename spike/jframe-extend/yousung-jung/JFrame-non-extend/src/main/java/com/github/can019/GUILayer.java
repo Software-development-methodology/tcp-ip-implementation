@@ -42,14 +42,18 @@ public class GUILayer extends Layer{
         frame.add(inputPanel, BorderLayout.SOUTH);
 
         // 버튼 이벤트 처리
-        sendButton.addActionListener(e -> sendMessage());
+        sendButton.addActionListener(e -> sendMessageButtonHandler());
 
         // 엔터 키 입력 처리
-        inputField.addActionListener(e -> sendMessage());
+        inputField.addActionListener(e -> sendMessageButtonHandler());
     }
 
 
-    private void sendMessage() {
+    private void sendMessageButtonHandler() {
+       appendMessageToChatLogArea();
+    }
+
+    private void appendMessageToChatLogArea() {
         String message = inputField.getText().trim();
         if (!message.isEmpty()) {
             chatArea.append("[send] " + message + "\n");
