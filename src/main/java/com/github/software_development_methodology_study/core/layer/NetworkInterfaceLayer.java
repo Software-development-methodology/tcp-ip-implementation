@@ -5,7 +5,6 @@ import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
 
 import java.io.EOFException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -13,12 +12,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * 네트워크 인터페이스 계층을 담당하는 싱글톤 클래스.
+ * 각 네트워크 인터페이스로부터 패킷을 수신하고 전송할 수 있습니다.
+ */
 public class NetworkInterfaceLayer {
     private final ExecutorService threadPool;
     private final static NetworkInterfaceLayer instance = new NetworkInterfaceLayer();
-    private List<PcapHandle> pcapHandleList = new ArrayList<>();
+    private List<PcapHandle> pcapHandleList;
 
-    public NetworkInterfaceLayer() {
+    /**
+     * 생성자 - 네트워크 인터페이스를 열고, 스레드 풀을 초기화합니다.
+     */
+    private NetworkInterfaceLayer() {
         try {
             pcapHandleList = getNICHandleList();
             this.threadPool = Executors.newFixedThreadPool(pcapHandleList.size());
@@ -27,16 +33,30 @@ public class NetworkInterfaceLayer {
         }
     }
 
+    /**
+     * 싱글톤 인스턴스를 반환합니다.
+     *
+     * @return NetworkInterfaceLayer 인스턴스
+     */
     public static NetworkInterfaceLayer getInstance() {
         return Objects.requireNonNullElseGet(instance, NetworkInterfaceLayer::new);
     }
 
+    /**
+     * 각 네트워크 인터페이스에 대해 패킷 수신 스레드를 시작합니다.
+     */
     public void run() {
         for (PcapHandle handle : pcapHandleList) {
             threadPool.submit(() -> receive(handle));
         }
     }
 
+    /**
+     * 주어진 PcapHandle로부터 패킷을 블로킹 방식으로 계속 수신합니다.
+     * 패킷 수신 시, 해당 데이터를 byte 배열로 출력합니다.
+     *
+     * @param handle PcapHandle 객체
+     */
     public void receive(PcapHandle handle) {
         try {
             while (!Thread.currentThread().isInterrupted()) {
@@ -47,11 +67,7 @@ public class NetworkInterfaceLayer {
 //                    upperLayer.receive(rawData);  // 상위 계층으로 전달
                 }
             }
-        }
-//        catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//        }
-        catch (PcapNativeException | NotOpenException | TimeoutException | EOFException e) {
+        } catch (PcapNativeException | NotOpenException | TimeoutException | EOFException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         } finally {
@@ -61,6 +77,11 @@ public class NetworkInterfaceLayer {
         }
     }
 
+    /**
+     * 상위 계층으로부터 전달받은 Chunk 데이터를 네트워크 인터페이스로 전송합니다.
+     *
+     * @param chunk 전송할 Chunk 데이터
+     */
     public void send(Chunk chunk) {
         Byte[] payload = chunk.getPayload().getBytes();
         Byte[] header = chunk.getHeader().getBytes();
@@ -70,7 +91,7 @@ public class NetworkInterfaceLayer {
         System.arraycopy(payload, 0, packet, header.length, payload.length);
 
         byte[] rawPacket = new byte[packet.length];
-        for(int i = 0; i < packet.length; i++)
+        for (int i = 0; i < packet.length; i++)
             rawPacket[i] = packet[i];
 
         pcapHandleList.stream().parallel().forEach(t -> {
@@ -82,6 +103,9 @@ public class NetworkInterfaceLayer {
         });
     }
 
+    /**
+     * 모든 NIC 핸들 스레드를 종료하고 리소스를 반환합니다.
+     */
     public void stopNICThreads() {
         pcapHandleList.forEach(t -> {
             try {
@@ -93,6 +117,13 @@ public class NetworkInterfaceLayer {
         });
     }
 
+    /**
+     * 시스템에 존재하는 모든 네트워크 인터페이스를 검색하고,
+     * 각 인터페이스에 대해 PcapHandle 객체를 생성하여 반환합니다.
+     *
+     * @return PcapHandle 리스트
+     * @throws PcapNativeException 네이티브 오류 발생 시
+     */
     private List<PcapHandle> getNICHandleList() throws PcapNativeException {
         List<PcapNetworkInterface> interfaces = Pcaps.findAllDevs();
         return interfaces.stream().map(t -> {
@@ -104,3 +135,4 @@ public class NetworkInterfaceLayer {
         }).toList();
     }
 }
+
