@@ -66,7 +66,7 @@ public class GUILayer extends Layer{
     }
 
     void receive(String message) {
-        generateChatLogMessage(message, ChatLogMode.SEND);
+        generateChatLogMessage(message, ChatLogMode.RECEIVE);
     }
 
 
