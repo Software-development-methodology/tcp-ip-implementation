@@ -4,13 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GUILayer extends Layer{
-    private JFrame frame;
+    private final JFrame frame;
     private JTextArea chatArea;
     private JTextField inputField;
     private JButton sendButton;
     private final static String DEFAULT_FRAME_NAME = "Chat";
 
     public GUILayer() {
+        frame = new JFrame(DEFAULT_FRAME_NAME);
         initFrame();
         initChatLogArea();
         initMessageInputArea();
@@ -18,7 +19,6 @@ public class GUILayer extends Layer{
     }
 
     private void initFrame() {
-        frame = new JFrame(DEFAULT_FRAME_NAME);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 400);
         frame.setLocationRelativeTo(null);
