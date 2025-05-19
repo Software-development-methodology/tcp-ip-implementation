@@ -75,6 +75,8 @@ public class GUILayer extends Layer{
     }
 
     private String generateChatLogMessage(String rawMessage, ChatLogMode chatLogMode, String extraMessage) {
+        if(Objects.isNull(rawMessage)) throw new IllegalArgumentException("raw message is null");
+
         StringBuilder sb = new StringBuilder()
                 .append("[").append(chatLogMode).append("]").append(" ");
 
