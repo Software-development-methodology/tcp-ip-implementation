@@ -2,6 +2,7 @@ package com.github.can019;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 public class GUILayer extends Layer{
     private final JFrame frame;
@@ -50,18 +51,60 @@ public class GUILayer extends Layer{
 
 
     private void sendMessageButtonHandler() {
-       appendMessageToChatLogArea();
+        String rawMessage = inputField.getText().trim();
+        String message = generateChatLogMessage(rawMessage, ChatLogMode.SEND, "(맥 주소)");
+
+        // 채팅 로그 append
+        chatArea.append(message);
+        inputField.setText("");
+
+        send(rawMessage);
     }
 
-    private void appendMessageToChatLogArea() {
-        String message = inputField.getText().trim();
-        if (!message.isEmpty()) {
-            chatArea.append("[send] " + message + "\n");
-            inputField.setText("");
-        }
+    void send(String message) {
+
     }
+
+    void receive(String message) {
+        generateChatLogMessage(message, ChatLogMode.SEND);
+    }
+
+
+    private String generateChatLogMessage(String rawMessage, ChatLogMode chatLogMode) {
+        return generateChatLogMessage(rawMessage, chatLogMode, null);
+    }
+
+    private String generateChatLogMessage(String rawMessage, ChatLogMode chatLogMode, String extraMessage) {
+        StringBuilder sb = new StringBuilder()
+                .append("[").append(chatLogMode).append("]").append(" ");
+
+        if (Objects.nonNull(extraMessage) && !extraMessage.isBlank()) {
+            sb.append(extraMessage).append(": ");
+        }
+
+        sb.append(rawMessage).append("\n");
+        return sb.toString();
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new GUILayer());
+    }
+
+
+    private enum ChatLogMode {
+        SEND("send"),
+        RECEIVE("receive");
+
+        private final String label;
+
+        ChatLogMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 }
