@@ -4,16 +4,17 @@ on:
     branches:
       - '**'
       - '!docs'
-      # - '*'         # matches every branch that doesn't contain a '/'
-      # - '*/*'       # matches every branch containing a single '/'
-      # - '**'        # matches every branch
-      # - '!main'   # excludes main
 
 jobs:
   gradle-task:
-    if: "!contains(github.head_ref, 'spike')" # 제외하고자 하는 branch는 glob 적용불가, if에 작성
-    runs-on: ubuntu-latest
+    if: "!contains(github.head_ref, 'spike')"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
+
     permissions: write-all
+
     steps:
       - name: Checkout to pr branch
         uses: actions/checkout@v4
@@ -23,7 +24,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
 
       - name: Set up gradle with gradle cache
         uses: gradle/actions/setup-gradle@v3
@@ -45,4 +45,4 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: './build/test-results/**/TEST-*.xml'
-          check_name: 'Test'
+          check_name: 'Test on ${{ matrix.os }}'
