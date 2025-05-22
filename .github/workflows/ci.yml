@@ -31,14 +31,12 @@ jobs:
         with:
           add-job-summary-as-pr-comment: on-failure
           gradle-version: 8.8
-          cache-read-only: false
-          cache-encryption-key: ${{ secrets.GradleEncryptionKey }}
 
       - name: Build
-        run: gradle build -x check --configuration-cache --info
+        run: gradle build -x
 
       - name: Test (Junit5)
-        run: gradle test --configuration-cache --info
+        run: gradle test
         continue-on-error: true
 
       - name: Publish test results
