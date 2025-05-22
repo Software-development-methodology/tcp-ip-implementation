@@ -33,7 +33,7 @@ jobs:
           gradle-version: 8.8
 
       - name: Build
-        run: gradle build -x
+        run: gradle build -x check
 
       - name: Test (Junit5)
         run: gradle test
