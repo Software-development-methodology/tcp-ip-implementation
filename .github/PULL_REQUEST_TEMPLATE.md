@@ -175,3 +175,56 @@
 
 ### 📁 업로드 문서
 - [`docs/meetings/yyyy-mm-dd.md`](docs/meetings/yyyy-mm-dd.md)
+
+
+
+
+
+<!-------------------------- CI -------------------------->
+
+<!-- Title: [CI] Description -->
+<!-- Label: documentation -->
+## ⚙️ CI
+
+### 📌 목적
+<!-- CI 관련 무엇을 개선 또는 추가했는지 명시 -->
+- GitHub Actions에 캐시 단계 추가
+- ESLint 자동 실행 추가
+- 병렬 빌드 전략 수정
+
+---
+
+### 🔧 변경 사항 요약
+<!-- 핵심 변경 내용을 간결하게 정리 -->
+- `.github/workflows/ci.yml`에서 `setup-java` → `actions/cache` 추가
+- `yarn lint` 스크립트를 `push` 시 자동 실행
+- 테스트 결과를 artifacts로 업로드
+
+---
+
+### 🧪 테스트 및 검증 방법
+<!-- PR에서 어떤 방식으로 정상 동작을 검증했는지 작성 -->
+- [x] 변경된 워크플로우로 직접 PR 생성 후 정상 작동 확인
+- [x] 실패 케이스 강제 주입 후 정상적으로 실패 로그 출력 확인
+- [ ] (선택) GitHub Actions Workflow runs 링크: [▶️ 보기](https://github.com/...)
+
+---
+
+### 🔍 리뷰어 확인 포인트
+- [ ] CI 설정 변경이 의도한 브랜치에만 적용되도록 제한되어 있는가?
+- [ ] 불필요한 워크플로우 실행이 생기지 않는가?
+- [ ] 워크플로우 이름, 조건, 캐시 키 등이 명확한가?
+
+---
+
+### 📁 변경 파일
+- `.github/workflows/ci.yml`
+- `package.json` (npm script 수정 포함)
+- `scripts/validate-branch.sh` (추가 스크립트 등)
+
+---
+
+### 📝 기타 참고 사항
+<!-- 문서화, 후속 작업, 개선 여지 등 -->
+- 후속 PR에서 release workflow도 분리 예정
+- GitHub Actions 매트릭스 전략은 추후 개선 검토 중
