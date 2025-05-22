@@ -18,16 +18,25 @@ public class OsBasedTest {
         }
     }
 
-    @Test
-    void shouldFailOnUbuntuOnly() {
-        String osName = System.getProperty("os.name").toLowerCase();
 
-        // Ubuntu만 실패
-        if (osName.contains("ubuntu")) {
-            fail("Failing on Ubuntu.");
+    @Test
+    void shouldPassOnAppleSiliconAndFailOnIntelMac() {
+        String osName = System.getProperty("os.name").toLowerCase();  // macOS 확인
+        String arch = System.getProperty("os.arch").toLowerCase();    // CPU 아키텍처 확인
+
+        // macOS이고 arm 계열이면 Apple Silicon → 실패
+        if (osName.contains("mac") && arch.contains("x86_64")) {
+            fail("Failing on Apple Silicon Mac (x86_64).");
         }
 
-        // 그 외 OS는 통과
-        assertTrue(true);
+        // macOS + Intel이면 통과
+        if (osName.contains("mac") && arch.contains("aarch64")) {
+            assertTrue(true); // 통과
+        }
+
+        // 다른 OS에서는 테스트 자체 skip (or pass)
+        else {
+            System.out.println("Not a macOS system. Skipping.");
+        }
     }
 }
