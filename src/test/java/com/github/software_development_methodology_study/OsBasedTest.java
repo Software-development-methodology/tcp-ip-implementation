@@ -17,4 +17,17 @@ public class OsBasedTest {
             assertTrue(true); // 성공
         }
     }
+
+    @Test
+    void shouldFailOnUbuntuOnly() {
+        String osName = System.getProperty("os.name").toLowerCase();
+
+        // Ubuntu만 실패
+        if (osName.contains("ubuntu")) {
+            fail("Failing on Ubuntu.");
+        }
+
+        // 그 외 OS는 통과
+        assertTrue(true);
+    }
 }
