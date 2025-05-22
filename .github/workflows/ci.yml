@@ -37,7 +37,7 @@ jobs:
 
       - name: Test (Junit5)
         run: gradle test
-        continue-on-error: true
+        continue-on-error: false
 
       # - name: Publish test results
       #   uses: EnricoMi/publish-unit-test-result-action@v2
