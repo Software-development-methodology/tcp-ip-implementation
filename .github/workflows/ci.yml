@@ -39,8 +39,8 @@ jobs:
         run: gradle test
         continue-on-error: true
 
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: './build/test-results/**/TEST-*.xml'
-          check_name: 'Test on ${{ matrix.os }}'
+      # - name: Publish test results
+      #   uses: EnricoMi/publish-unit-test-result-action@v2
+      #   with:
+      #     files: './build/test-results/**/TEST-*.xml'
+      #     check_name: 'Test on ${{ matrix.os }}'
