@@ -34,3 +34,30 @@
 #### Something
 - description
 
+
+<!-------------------------- Feature -------------------------->
+
+<!-- Title: [Feature] description -->
+<!-- Label: enhancement -->
+# Feature 이름 (ex. Data 추상화 및 abstract 작성)
+- reference(ex. #Issue-Number, # PR-Number) or description
+
+<!-- # Custom 항목 -->
+---
+# 클래스 다이어그램 ()
+>[!note]
+> Safari에서 깨집니다. Chrome으로 보시면 됩니다.
+```mermaid
+
+```
+---
+# 🤔 고민 했던 것
+
+---
+# 생각해볼 것
+## Something
+- description
+## 아이디어 or 조금 미흡한 것
+### ...
+- description
+
