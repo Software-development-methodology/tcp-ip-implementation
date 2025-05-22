@@ -18,4 +18,19 @@
 #### Something
 - description
 
+<!-------------------------- Individual Spike -------------------------->
+
+<!-- Title: [Spike] issueX descrition -->
+<!-- Label: Group Spike or Individual spike-->
+
+### 🧪 Spike 목표
+> #Issue-Number or description
+
+### 🔨 작업 내용
+#### Something
+- description
+
+### 🧹 기타
+#### Something
+- description
 
