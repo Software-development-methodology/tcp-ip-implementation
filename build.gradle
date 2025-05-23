@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.github.software_development_methodology_study'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.pcap4j:pcap4j-core:1.8.0'
+    runtimeOnly 'org.pcap4j:pcap4j-packetfactory-static:1.8.0'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    testImplementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("ch.qos.logback:logback-classic:1.5.18")
+}
+
+test {
+    useJUnitPlatform()
+}
