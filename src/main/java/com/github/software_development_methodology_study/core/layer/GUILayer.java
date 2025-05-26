@@ -16,6 +16,10 @@ public class GUILayer extends Layer<EmptyHeader> {
     private JButton sendButton;
     private final static String DEFAULT_FRAME_NAME = "Chat";
 
+    private String currentIp = "";
+    private String currentMac = "";
+
+
     public GUILayer() {
         frame = new JFrame(DEFAULT_FRAME_NAME);
         initFrame();
@@ -41,29 +45,61 @@ public class GUILayer extends Layer<EmptyHeader> {
 
     private void initMessageInputArea() {
         JPanel inputPanel = new JPanel(new BorderLayout());
+
+        // 메시지 입력 필드와 send 버튼
         inputField = new JTextField();
         sendButton = new JButton("send");
-        inputPanel.add(inputField, BorderLayout.CENTER);
-        inputPanel.add(sendButton, BorderLayout.EAST);
-        frame.add(inputPanel, BorderLayout.SOUTH);
 
-        // 버튼 이벤트 처리
+        JPanel messagePanel = new JPanel(new BorderLayout());
+        messagePanel.add(inputField, BorderLayout.CENTER);
+        messagePanel.add(sendButton, BorderLayout.EAST);
+
+        // IP/MAC 입력 필드와 set 버튼
+        JTextField ipField = new JTextField();
+        JTextField macField = new JTextField();
+        JButton ipMacSetButton = new JButton("set");
+
+        JPanel ipMacPanel = new JPanel(new GridLayout(2, 2));
+        ipMacPanel.add(new JLabel("IP:"));
+        ipMacPanel.add(ipField);
+        ipMacPanel.add(new JLabel("MAC:"));
+        ipMacPanel.add(macField);
+
+        JPanel setPanel = new JPanel(new BorderLayout());
+        setPanel.add(ipMacPanel, BorderLayout.CENTER);
+        setPanel.add(ipMacSetButton, BorderLayout.SOUTH); // set 버튼은 아래
+
+        // 전체 하단 구성: 메시지 영역 위, IP/MAC 아래
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(messagePanel, BorderLayout.NORTH);
+        bottomPanel.add(setPanel, BorderLayout.SOUTH);
+
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+
+        // 이벤트: set 버튼 → 입력 필드에서 current 값으로 저장
+        ipMacSetButton.addActionListener(e -> {
+            currentIp = ipField.getText().trim();
+            currentMac = macField.getText().trim();
+            System.out.println(currentIp + currentMac);
+            JOptionPane.showMessageDialog(frame, "IP/MAC 설정 완료!");
+        });
+
+        // 이벤트: 메시지 전송
+        inputField.addActionListener(e -> sendMessageButtonHandler());
         sendButton.addActionListener(e -> sendMessageButtonHandler());
 
-        // 엔터 키 입력 처리
-        inputField.addActionListener(e -> sendMessageButtonHandler());
     }
+
 
     private void sendMessageButtonHandler() {
         String rawMessage = inputField.getText().trim();
-        String message = generateChatLogMessage(rawMessage, ChatLogMode.SEND, "(맥 주소)");
+        if (rawMessage.isEmpty() || currentIp.isBlank() || currentMac.isBlank()) return;
 
-        // 채팅 로그 append
+        String extraInfo = String.format("IP: %s, MAC: %s", currentIp, currentMac);
+        String message = generateChatLogMessage(rawMessage, ChatLogMode.SEND, extraInfo);
+
         chatArea.append(message);
         inputField.setText("");
-
-        //@TODO :: rawMessage to Chunk
-        //send(rawMessage);
     }
 
     private String generateChatLogMessage(String rawMessage, ChatLogMode chatLogMode) {
@@ -111,5 +147,10 @@ public class GUILayer extends Layer<EmptyHeader> {
         public String toString() {
             return label;
         }
+    }
+
+    public static void main(String[] args) {
+        GUILayer layer = new GUILayer();
+        layer.frame.setVisible(true);
     }
 }
