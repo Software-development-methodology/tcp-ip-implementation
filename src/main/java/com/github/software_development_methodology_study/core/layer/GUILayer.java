@@ -124,6 +124,7 @@ public class GUILayer extends Layer<EmptyHeader> {
     public void receive(Chunk<Header> chunk) {
         String message = null;
         // @TODO:: Chunk to message
+        // @TODO:: Message를 chatArea에 append
         generateChatLogMessage(message, ChatLogMode.RECEIVE);
     }
 
