@@ -16,17 +16,12 @@ import java.util.concurrent.TimeoutException;
 public class NetworkInterfaceLayer {
     private final ExecutorService threadPool;
     private final static NetworkInterfaceLayer instance = new NetworkInterfaceLayer();
-    private final List<PcapHandle> handles = new ArrayList<>();
+    private List<PcapHandle> pcapHandleList = new ArrayList<>();
 
     public NetworkInterfaceLayer() {
         try {
-            List<PcapNetworkInterface> interfaces = Pcaps.findAllDevs();
-            this.threadPool = Executors.newFixedThreadPool(interfaces.size());
-
-            for (PcapNetworkInterface nif : interfaces) {
-                PcapHandle handle = nif.openLive(65536, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, 10);
-                handles.add(handle);
-            }
+            pcapHandleList = getNICHandleList();
+            this.threadPool = Executors.newFixedThreadPool(pcapHandleList.size());
         } catch (PcapNativeException e) {
             throw new RuntimeException(e);
         }
@@ -37,7 +32,7 @@ public class NetworkInterfaceLayer {
     }
 
     public void run() {
-        for (PcapHandle handle : handles) {
+        for (PcapHandle handle : pcapHandleList) {
             threadPool.submit(() -> receive(handle));
         }
     }
@@ -57,6 +52,7 @@ public class NetworkInterfaceLayer {
 //            Thread.currentThread().interrupt();
 //        }
         catch (PcapNativeException | NotOpenException | TimeoutException | EOFException e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         } finally {
             if (handle != null && handle.isOpen()) {
@@ -66,8 +62,45 @@ public class NetworkInterfaceLayer {
     }
 
     public void send(Chunk chunk) {
-        for (PcapHandle handle : handles) {
-//            handle.sendPacket(chunk.toByteArr());
-        }
+        Byte[] payload = chunk.getPayload().getBytes();
+        Byte[] header = chunk.getHeader().getBytes();
+
+        Byte[] packet = new Byte[header.length + payload.length];
+        System.arraycopy(header, 0, packet, 0, header.length);
+        System.arraycopy(payload, 0, packet, header.length, payload.length);
+
+        byte[] rawPacket = new byte[packet.length];
+        for(int i = 0; i < packet.length; i++)
+            rawPacket[i] = packet[i];
+
+        pcapHandleList.stream().parallel().forEach(t -> {
+            try {
+                t.sendPacket(rawPacket);
+            } catch (NotOpenException | PcapNativeException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void stopNICThreads() {
+        pcapHandleList.forEach(t -> {
+            try {
+                t.breakLoop();
+                t.close();
+            } catch (NotOpenException e) {
+                System.err.println("이미 닫힌 핸들입니다." + e);
+            }
+        });
+    }
+
+    private List<PcapHandle> getNICHandleList() throws PcapNativeException {
+        List<PcapNetworkInterface> interfaces = Pcaps.findAllDevs();
+        return interfaces.stream().map(t -> {
+            try {
+                return t.openLive(65535, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, 10);
+            } catch (PcapNativeException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
     }
 }
