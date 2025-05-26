@@ -1,6 +1,5 @@
 package com.github.software_development_methodology_study.core.layer;
 
-import com.github.software_development_methodology_study.common.util.Convertor;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
@@ -27,7 +26,7 @@ public class GUILayer extends Layer<EmptyHeader> {
         frame = new JFrame(DEFAULT_FRAME_NAME);
         initFrame();
         initChatLogArea();
-        initMessageInputArea();
+        initMessageAndIpMacSetArea();
         frame.setVisible(true);
     }
 
@@ -46,10 +45,14 @@ public class GUILayer extends Layer<EmptyHeader> {
         frame.add(scrollPane, BorderLayout.CENTER);
     }
 
-    private void initMessageInputArea() {
-        JPanel inputPanel = new JPanel(new BorderLayout());
+    private void initMessageAndIpMacSetArea() {
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(createMessagePanel(), BorderLayout.NORTH);
+        bottomPanel.add(createIpMacPanel(), BorderLayout.SOUTH);
+        frame.add(bottomPanel, BorderLayout.SOUTH);
+    }
 
-        // 메시지 입력 필드와 send 버튼
+    private JPanel createMessagePanel() {
         inputField = new JTextField();
         sendButton = new JButton("send");
 
@@ -57,7 +60,14 @@ public class GUILayer extends Layer<EmptyHeader> {
         messagePanel.add(inputField, BorderLayout.CENTER);
         messagePanel.add(sendButton, BorderLayout.EAST);
 
-        // IP/MAC 입력 필드와 set 버튼
+        // 메시지 전송 이벤트
+        inputField.addActionListener(e -> sendMessageButtonHandler());
+        sendButton.addActionListener(e -> sendMessageButtonHandler());
+
+        return messagePanel;
+    }
+
+    private JPanel createIpMacPanel() {
         JTextField ipField = new JTextField();
         JTextField macField = new JTextField();
         JButton ipMacSetButton = new JButton("set");
@@ -70,29 +80,17 @@ public class GUILayer extends Layer<EmptyHeader> {
 
         JPanel setPanel = new JPanel(new BorderLayout());
         setPanel.add(ipMacPanel, BorderLayout.CENTER);
-        setPanel.add(ipMacSetButton, BorderLayout.SOUTH); // set 버튼은 아래
+        setPanel.add(ipMacSetButton, BorderLayout.SOUTH);
 
-        // 전체 하단 구성: 메시지 영역 위, IP/MAC 아래
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(messagePanel, BorderLayout.NORTH);
-        bottomPanel.add(setPanel, BorderLayout.SOUTH);
-
-        frame.add(bottomPanel, BorderLayout.SOUTH);
-
-        // 이벤트: set 버튼 → 입력 필드에서 current 값으로 저장
+        // IP/MAC 설정 이벤트
         ipMacSetButton.addActionListener(e -> {
             currentIp = ipField.getText().trim();
             currentMac = macField.getText().trim();
-            System.out.println(currentIp + currentMac);
             JOptionPane.showMessageDialog(frame, "IP/MAC 설정 완료!");
         });
 
-        // 이벤트: 메시지 전송
-        inputField.addActionListener(e -> sendMessageButtonHandler());
-        sendButton.addActionListener(e -> sendMessageButtonHandler());
-
+        return setPanel;
     }
-
 
     private void sendMessageButtonHandler() {
         String rawMessage = inputField.getText().trim();
