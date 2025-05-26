@@ -94,7 +94,10 @@ public class GUILayer extends Layer<EmptyHeader> {
 
     private void sendMessageButtonHandler() {
         String rawMessage = inputField.getText().trim();
-        if (rawMessage.isEmpty() || currentIp.isBlank() || currentMac.isBlank()) return;
+        if (rawMessage.isEmpty() || currentIp.isBlank() || currentMac.isBlank()) {
+            JOptionPane.showMessageDialog(frame, "IP/MAC 또는 메세지가 비어있습니다");
+            return;
+        }
 
         String extraInfo = String.format("IP: %s, MAC: %s", currentIp, currentMac);
         String message = generateChatLogMessage(rawMessage, ChatLogMode.SEND, extraInfo);
