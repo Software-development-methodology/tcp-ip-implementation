@@ -1,27 +1,66 @@
 package com.github.software_development_methodology_study.core.layer;
 
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
-import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
-import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 import org.pcap4j.core.*;
+import org.pcap4j.packet.Packet;
 
+import java.io.EOFException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
-public class NetworkInterfaceLayer extends Layer<EmptyHeader> {
-    private List<PcapHandle> pcapHandleList;
+public class NetworkInterfaceLayer {
+    private final ExecutorService threadPool;
+    private final static NetworkInterfaceLayer instance = new NetworkInterfaceLayer();
+    private List<PcapHandle> pcapHandleList = new ArrayList<>();
 
-    public NetworkInterfaceLayer() throws PcapNativeException {
-        pcapHandleList = getNICHandleList();
+    public NetworkInterfaceLayer() {
+        try {
+            pcapHandleList = getNICHandleList();
+            this.threadPool = Executors.newFixedThreadPool(pcapHandleList.size());
+        } catch (PcapNativeException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    @Override
-    public void receive(Chunk chunk) {
-
+    public static NetworkInterfaceLayer getInstance() {
+        return Objects.requireNonNullElseGet(instance, NetworkInterfaceLayer::new);
     }
 
-    // Byte를 쓰면 unboxing 작업은 어디선가 해야 됨
-    // 일단 모든 nic에서 패킷 발송하도록 함
-    @Override
+    public void run() {
+        for (PcapHandle handle : pcapHandleList) {
+            threadPool.submit(() -> receive(handle));
+        }
+    }
+
+    public void receive(PcapHandle handle) {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                Packet packet = handle.getNextPacketEx();  // blocking
+                if (packet != null) {
+                    byte[] rawData = packet.getRawData();
+                    System.out.println(Arrays.toString(rawData));
+//                    upperLayer.receive(rawData);  // 상위 계층으로 전달
+                }
+            }
+        }
+//        catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
+        catch (PcapNativeException | NotOpenException | TimeoutException | EOFException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        } finally {
+            if (handle != null && handle.isOpen()) {
+                handle.close();
+            }
+        }
+    }
+
     public void send(Chunk chunk) {
         Byte[] payload = chunk.getPayload().getBytes();
         Byte[] header = chunk.getHeader().getBytes();
@@ -43,32 +82,7 @@ public class NetworkInterfaceLayer extends Layer<EmptyHeader> {
         });
     }
 
-    public void startNICThread(PcapHandle handle) {
-        Thread thread = new Thread(() -> {
-            try {
-                handle.loop(-1, new RawPacketListener() {
-                    @Override
-                    public void gotPacket(byte[] packet) {
-                        EmptyHeader emptyHeader = new EmptyHeader();
-                        Chunk<EmptyHeader> chunk = new Chunk<>();
-                        chunk.setHeader(emptyHeader);
-//                        chunk.setPayload(new Payload(packet));  // Byte unboxing 귀찮아서 일단 주석처리..
-
-                        // 타입 불일치 문제
-                        // receive 메서드로 보내고 receive 메서드에서 upper를 호출할까?
-//                        upperLayer.send(chunk);
-                    }
-                });
-            } catch (PcapNativeException | NotOpenException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-        });
-        thread.start();
-    }
-
-    // 루프를 명시적으로 종료하지 않으면 계속 돌 수 있다고 함
-    public void stopNICThreads() throws PcapNativeException {
+    public void stopNICThreads() {
         pcapHandleList.forEach(t -> {
             try {
                 t.breakLoop();
@@ -78,8 +92,6 @@ public class NetworkInterfaceLayer extends Layer<EmptyHeader> {
             }
         });
     }
-
-
 
     private List<PcapHandle> getNICHandleList() throws PcapNativeException {
         List<PcapNetworkInterface> interfaces = Pcaps.findAllDevs();
