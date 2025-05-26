@@ -1,5 +1,6 @@
 package com.github.software_development_methodology_study.core.layer;
 
+import com.github.software_development_methodology_study.common.util.Convertor;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
@@ -8,6 +9,8 @@ import java.util.Arrays;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
+
+import static com.github.software_development_methodology_study.common.util.Convertor.ByteArrayToString;
 
 public class GUILayer extends Layer<EmptyHeader> {
     private final JFrame frame;
@@ -122,9 +125,7 @@ public class GUILayer extends Layer<EmptyHeader> {
 
     @Override
     public void receive(Chunk<Header> chunk) {
-        String message = null;
-        // @TODO:: Chunk to message
-        // @TODO:: Message를 chatArea에 append
+        String message = ByteArrayToString(chunk.getPayload().getBytes());
         generateChatLogMessage(message, ChatLogMode.RECEIVE);
     }
 
