@@ -151,9 +151,4 @@ public class GUILayer extends Layer<EmptyHeader> {
             return label;
         }
     }
-
-    public static void main(String[] args) {
-        GUILayer layer = new GUILayer();
-        layer.frame.setVisible(true);
-    }
 }
