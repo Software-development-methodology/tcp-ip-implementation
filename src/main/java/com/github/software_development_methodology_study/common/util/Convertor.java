@@ -1,6 +1,7 @@
 package com.github.software_development_methodology_study.common.util;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public final class Convertor {
     private Convertor(){}
@@ -15,8 +16,17 @@ public final class Convertor {
         return byteObjectArray;
     }
 
-    public static String ByteArrayToString() throws Exception{
-        // @TODO 구현: can019
-        throw new Exception("Method not implemented");
+    public static String ByteArrayToString(Byte[] bytes) throws IllegalArgumentException {
+        if (Objects.isNull(bytes)) throw new IllegalArgumentException("Input Byte array cannot be null");
+
+        byte[] primitiveBytes = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] == null) {
+                throw new IllegalArgumentException("Byte array contains null at index " + i);
+            }
+            primitiveBytes[i] = bytes[i];
+        }
+
+        return new String(primitiveBytes, StandardCharsets.UTF_8);
     }
 }
