@@ -13,8 +13,11 @@ import java.util.stream.IntStream;
 
 public class InternetLayer extends Layer<PacketHeader> {
 
-//    private final ConcurrentHashMap<Byte, Payload> fragmentMap = new ConcurrentHashMap<>();
-
+    /**
+     * 패킷 식별용 클래스 <br>
+     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다.
+     * @author SeungminShin97
+     */
     private class FragmentKey {
         private final String srcIp;
         private final String dstIp;
@@ -28,7 +31,12 @@ public class InternetLayer extends Layer<PacketHeader> {
             this.identification = identification;
         }
     }
-    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
+
+    /**
+     * 들어온 패킷을 모아두는 Map
+     * FragmentKey로 패킷 종류를 나누고, [Offset, Payload] 형태로 저장
+     */
+    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Byte, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
 
 
     @Override
@@ -68,15 +76,18 @@ public class InternetLayer extends Layer<PacketHeader> {
     @Override
     public void send(Chunk<Header> chunk) {
         PacketHeader ipHeader = new PacketHeader();
-        //헤더 설정
-
+        // 헤더 설정
         chunk.setHeader(ipHeader);
-
         lowerLayer.send(chunk);
 
     }
 
-    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, Header header) {
+    /**
+     * 이더넷 레이어에서 올라온 청크의 페이로드를 인터넷 헤더와 인터넷 페이로드로 분리
+     * @param chunk 이더넷 레이어에서 올라온 청크
+     * @param header 청크에 주입할 패킷 헤더
+     */
+    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader header) {
         Byte[] lowerPayload = chunk.getPayload().getBytes();
         // 페이로드 에서 헤더 추출
         // Header에 필드 주입
@@ -98,14 +109,19 @@ public class InternetLayer extends Layer<PacketHeader> {
         return true;
     }
 
+    /**
+     * 프래그먼트 합치는 메서드
+     * @param fragmentKey 패킷 식별키
+     * @param fragmentCnt 식별된 패킷들 개수
+     * @return 식별된 패킷들을 합친 패킷(세그먼트)
+     * @author SeungminShin97
+     */
     private Byte[] mergeFragments(FragmentKey fragmentKey, int fragmentCnt) {
-        Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
+        Map<Byte, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
         ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
 
         for(int i = 0; i < fragmentCnt; ++i)
             fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
-
-//        IntStream.range(0, fragmentCnt).forEach(i -> {fragmentList.add(fragmentMap.get(i))});
 
         return fragmentList.toArray(new Byte[0]);
     }
