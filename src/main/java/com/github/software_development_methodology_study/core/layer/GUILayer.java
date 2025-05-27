@@ -3,6 +3,7 @@ package com.github.software_development_methodology_study.core.layer;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
+import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
 import java.util.Arrays;
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.*;
 import java.util.Objects;
 
 import static com.github.software_development_methodology_study.common.util.TypeConverter.ByteArrayToString;
+import static com.github.software_development_methodology_study.common.util.TypeConverter.StringToByteArray;
 
 public class GUILayer extends Layer<EmptyHeader> {
     private final JFrame frame;
@@ -103,6 +105,11 @@ public class GUILayer extends Layer<EmptyHeader> {
         String message = generateChatLogMessage(rawMessage, ChatLogMode.SEND, extraInfo);
 
         chatArea.append(message);
+
+        Chunk chunk = new Chunk();
+        chunk.setHeader(new EmptyHeader());
+        chunk.setPayload(new Payload(StringToByteArray(rawMessage)));
+
         inputField.setText("");
     }
 
