@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-import static com.github.software_development_methodology_study.common.util.Convertor.ByteArrayToString;
+import static com.github.software_development_methodology_study.common.util.TypeConverter.ByteArrayToString;
 
 public class GUILayer extends Layer<EmptyHeader> {
     private final JFrame frame;

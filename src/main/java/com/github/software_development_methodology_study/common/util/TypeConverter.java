@@ -3,8 +3,8 @@ package com.github.software_development_methodology_study.common.util;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public final class Convertor {
-    private Convertor(){}
+public final class TypeConverter {
+    private TypeConverter(){}
 
     public static Byte[] StringToByteArray(String str) {
         byte[] byteArray = str.getBytes(StandardCharsets.UTF_8); // or Charset.forName("UTF-8")
