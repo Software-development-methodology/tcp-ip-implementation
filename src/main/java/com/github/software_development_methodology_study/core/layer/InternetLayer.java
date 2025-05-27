@@ -79,13 +79,13 @@ public class InternetLayer extends Layer<PacketHeader> {
         // 헤더 설정
         chunk.setHeader(ipHeader);
         lowerLayer.send(chunk);
-
     }
 
     /**
-     * 이더넷 레이어에서 올라온 청크의 페이로드를 인터넷 헤더와 인터넷 페이로드로 분리
-     * @param chunk 이더넷 레이어에서 올라온 청크
-     * @param header 청크에 주입할 패킷 헤더
+     * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱하여
+     * 새로운 PacketHeader에 세팅한 뒤, 해당 헤더를 청크에 주입.
+     * 버전, 길이, 식별자, 플래그, IP 주소 등 주요 필드를 바이트 배열로 변환해 설정.
+     * @author judy78799
      */
     private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader header) {
         Byte[] lowerPayload = chunk.getPayload().getBytes();
