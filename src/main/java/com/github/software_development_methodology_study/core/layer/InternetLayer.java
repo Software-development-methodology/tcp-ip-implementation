@@ -3,25 +3,66 @@ package com.github.software_development_methodology_study.core.layer;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
+import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 public class InternetLayer extends Layer<PacketHeader> {
-    //String IP 주소 iv
-    //static 변수로 패킷(Map으로 저장? - TCP 순서 번호를 key로)을 cv로 만드는거랑 그냥 iv로 만드는거랑 차이가 뭐지? 나중에 비교
+
+//    private final ConcurrentHashMap<Byte, Payload> fragmentMap = new ConcurrentHashMap<>();
+
+    private class FragmentKey {
+        private final String srcIp;
+        private final String dstIp;
+        private final int protocol;
+        private final int identification;
+
+        public FragmentKey(String srcIp, String dstIp, int protocol, int identification) {
+            this.srcIp = srcIp;
+            this.dstIp = dstIp;
+            this.protocol = protocol;
+            this.identification = identification;
+        }
+    }
+    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
+
+
     @Override
     public void receive(Chunk<Header> chunk) {
-        PacketHeader ipHeader = new PacketHeader();
+        if(chunk.getPayload() == null)
+            throw new NullPointerException("Chunk is null");
 
-        //가져온 이더넷 페이로드를 헤더를 헤더와 페이로드로 분리
+        PacketHeader packetHeader = new PacketHeader();
+//        chunk.setHeader(packetHeader);
 
-        //목적지 주소를 확인해서 맞으면 보내고 아니면 캔슬
-       chunk.setHeader(ipHeader);
+        extractChunkAndSetNewHeader(chunk, packetHeader);
 
-       chunk = extractChunk(chunk);
+        // TODO: isLocalIPAddress 매개변수 수정
+        // 아이피 주소 확인
+        if(!isLocalIPAddress(null))
+            return;
 
-       upperLayer.receive(chunk);
+//        프로토콜 별 처리
+//        -> tcp는 마지막 프래그먼트면 바로 합치고 올릴 수 있음<신뢰성>
+//        -> UDP는 비신뢰성이라 다 오는 것 확인해야함
+//        근데 굳이 나눠야 하나? UDP 안할 것 같은디
+//        Protocol protocol = getProtocol(null);
 
+        // TODO: fragmentBuffer에 헤더 넣기..
+
+        // TODO: isLastFragment 매개변수 수정,
+        //  getFragmentKey 메서드 작성,
+        //  mergeFragments 매개변수 수정
+        if(isLastFragment(null)) {
+//            FragmentKey fragmentKey = getFragmentKey();
+            Byte[] mergedFragment = mergeFragments(null, fragmentBuffer.get(null).size());
+            chunk.setPayload(new Payload(mergedFragment));
+            upperLayer.receive(chunk);
+        }
     }
 
     @Override
@@ -35,12 +76,37 @@ public class InternetLayer extends Layer<PacketHeader> {
 
     }
 
-    private Chunk<Header> extractChunk(Chunk<Header> ethernetChunk) {
-       Byte[] Data = ethernetChunk.getPayload().getBytes();
-        //여기 분리 로직은 GPT 참고
-       // Byte[] headerData = Arrays.copyOfRange()
+    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, Header header) {
+        Byte[] lowerPayload = chunk.getPayload().getBytes();
+        // 페이로드 에서 헤더 추출
+        // Header에 필드 주입
+        chunk.setHeader(header);
+    }
 
+    // TODO: 아이피 확인 메서드 구현
+    private boolean isLocalIPAddress(Byte[] ipAddress) {
+        // 아이피 확인
+        return true;
+    }
 
+//    tcp, udp 확인용 / 추후 udp 확장 가능성 고려
+//    private Protocol getProtocol(Byte[] protocol) {}
 
+    // TODO: 마지막 프래그먼트 확인 메서드 구현
+    private boolean isLastFragment(Byte[] MF) {
+        // More Fragments
+        return true;
+    }
+
+    private Byte[] mergeFragments(FragmentKey fragmentKey, int fragmentCnt) {
+        Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
+        ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
+
+        for(int i = 0; i < fragmentCnt; ++i)
+            fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
+
+//        IntStream.range(0, fragmentCnt).forEach(i -> {fragmentList.add(fragmentMap.get(i))});
+
+        return fragmentList.toArray(new Byte[0]);
     }
 }
