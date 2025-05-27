@@ -90,8 +90,55 @@ public class InternetLayer extends Layer<PacketHeader> {
     private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader header) {
         Byte[] lowerPayload = chunk.getPayload().getBytes();
         // 페이로드 에서 헤더 추출
+        if(lowerPayload.length < 20){
+            throw new IllegalArgumentException("유효하지 않은 헤더");
+        }
+        PacketHeader packetHeader = new PacketHeader();
+
+        // Version과 IHL (상위 4비트씩) 비트 마스크 사용
+        int versionAndIHL = Byte.toUnsignedInt(lowerPayload[0]);
+        int version = (versionAndIHL >> 4) & 0x0F;
+        int ihl = versionAndIHL & 0x0F;
+
+        int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
+        int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
+
+        // Flags (3비트) + Fragment Offset (13비트)
+        int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
+        int flags = (flagsAndOffset >> 13) & 0x07;
+        int fragmentOffset = flagsAndOffset & 0x1FFF;
+
+        int ttl = Byte.toUnsignedInt(lowerPayload[8]);
+        int protocol = Byte.toUnsignedInt(lowerPayload[9]);
+
+        // 출발지 주소 Source IP (12~15)
+        int srcIp =
+                (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
+                        (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
+                        (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
+                        Byte.toUnsignedInt(lowerPayload[15]);
+
+        // 목적지 주소 Destination IP (16~19)
+        int dstIp =
+                (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
+                        (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
+                        (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
+                        Byte.toUnsignedInt(lowerPayload[19]);
+
+        // PacketHeader에 값 주입
+        packetHeader.setVersion(new Byte[]{(byte)version}); //int -> Byte[]
+        packetHeader.setIHL(new Byte[]{(byte)ihl});
+        packetHeader.setTotal_Length(new Byte[]{(byte)totalLength});
+        packetHeader.setIdentification(new Byte[]{(byte)identification});
+        packetHeader.setFlags(new Byte[]{(byte)flags});
+        packetHeader.setFragment_Offset(new Byte[]{(byte)fragmentOffset});
+        packetHeader.setTTL(new Byte[]{(byte)ttl});
+        packetHeader.setProtocol(new Byte[]{(byte)protocol});
+        packetHeader.setSource_Address(new Byte[]{(byte)srcIp});
+        packetHeader.setDestination_Address(new Byte[]{(byte)dstIp});
+
         // Header에 필드 주입
-        chunk.setHeader(header);
+        chunk.setHeader(packetHeader); //PacketHeader
     }
 
     // TODO: 아이피 확인 메서드 구현
