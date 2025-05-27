@@ -133,6 +133,7 @@ public class GUILayer extends Layer<EmptyHeader> {
     @Override
     public void send(Chunk<Header> chunk) {
         System.out.println(Arrays.toString(chunk.getPayload().getBytes()));
+        this.lowerLayer.send(chunk);
     }
 
 
