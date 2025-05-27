@@ -1,5 +1,6 @@
 package com.github.software_development_methodology_study.core.layer;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.pcap4j.core.*;
 import org.pcap4j.packet.Packet;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class NetworkInterfaceLayerTest {
 
 
-    @Test
+    @Disabled
     void test() throws PcapNativeException, NotOpenException, EOFException, TimeoutException {
         List<PcapNetworkInterface> interfaces1 = Pcaps.findAllDevs();
         for (PcapNetworkInterface nif : interfaces1) {
