@@ -1,5 +1,8 @@
 name: "CI"
 on:
+  push:
+    branches:
+      - 'develop'
   pull_request:
     branches:
       - '**'
@@ -10,8 +13,9 @@ jobs:
     if: "!contains(github.head_ref, 'spike')"
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
+        os: [macos-latest, macos-14, windows-latest]
 
     permissions: write-all
 
@@ -26,11 +30,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Set up gradle with gradle cache
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
         continue-on-error: true
         with:
-          add-job-summary-as-pr-comment: on-failure
-          gradle-version: 8.8
+          gradle-version: '8.8'
+#          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Build
         run: gradle build -x check
