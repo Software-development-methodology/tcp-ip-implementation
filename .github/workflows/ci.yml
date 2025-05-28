@@ -2,7 +2,7 @@ name: "CI"
 on:
   push:
     branches:
-      - '**'
+      - 'develop'
   pull_request:
     branches:
       - '**'
@@ -35,7 +35,7 @@ jobs:
         with:
           add-job-summary-as-pr-comment: on-failure
           gradle-version: 8.8
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+#          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Build
         run: gradle build -x check
