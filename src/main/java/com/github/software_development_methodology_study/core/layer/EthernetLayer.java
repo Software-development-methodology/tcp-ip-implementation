@@ -11,6 +11,7 @@ public class EthernetLayer extends Layer {
 
     @Override
     public void send(Chunk chunk) {
+        validateIncomingPayloadSize(chunk.getPayload());
 
     }
 
@@ -22,7 +23,7 @@ public class EthernetLayer extends Layer {
         return false;
     }
 
-    private boolean validatePayloadSize(Payload payload) {
-        return false;
+    private void validateIncomingPayloadSize(Payload payload) {
+        if(payload.getBytes().length > 1500) throw new IllegalArgumentException("Payload length too large");
     }
 }
