@@ -1,14 +1,16 @@
 package com.github.software_development_methodology_study.core.data.chunk.header;
 
 public class FrameHeader extends Header{
+    private final Byte[] preamble;
     private final Byte[] destinationMac;
     private final Byte[] srcMac;
     private final Byte[] type;
     private final Byte[] fcs;
 
 
-    public FrameHeader(Byte[] rawHeader, Byte[] destinationMac, Byte[] srcMac, Byte[] type, Byte[] fcs) {
+    public FrameHeader(Byte[] rawHeader, Byte[] preamble, Byte[] destinationMac, Byte[] srcMac, Byte[] type, Byte[] fcs) {
         super(rawHeader);
+        this.preamble = preamble;
         this.destinationMac = destinationMac;
         this.srcMac = srcMac;
         this.type = type;
@@ -36,6 +38,7 @@ public class FrameHeader extends Header{
         private Byte[] srcMac;
         private Byte[] type;
         private Byte[] fcs;
+        private Byte[] preamble;
 
         public FrameHeaderBuilder rawHeader(Byte[] rawHeader) {
             this.rawHeader = rawHeader;
@@ -62,8 +65,13 @@ public class FrameHeader extends Header{
             return this;
         }
 
+        public FrameHeaderBuilder preamble(Byte[] preamble) {
+            this.preamble = preamble;
+            return this;
+        }
+
         public FrameHeader build() {
-            return new FrameHeader(rawHeader, destinationMac, srcMac, type, fcs);
+            return new FrameHeader(rawHeader, preamble, destinationMac, srcMac, type, fcs);
         }
     }
 
