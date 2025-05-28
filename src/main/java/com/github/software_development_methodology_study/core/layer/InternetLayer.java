@@ -6,6 +6,7 @@ import com.github.software_development_methodology_study.core.data.chunk.header.
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class InternetLayer extends Layer<PacketHeader> {
         extractChunkAndSetNewHeader(chunk, packetHeader);
 
         // 목적지 아이피 주소 확인
-        if(!isLocalIPAddress(null))
+        if(!isLocalIPAddress(packetHeader.getDestination_Address()))
             return;
 
 //        프로토콜 별 처리
@@ -179,8 +180,15 @@ public class InternetLayer extends Layer<PacketHeader> {
 
     // TODO: 아이피 확인 메서드 구현
     private boolean isLocalIPAddress(Byte[] ipAddress) {
-        // 아이피 확인
-        return true;
+        try {
+            byte[] localIp = InetAddress.getLocalHost().getAddress();
+            byte[] ipAddressBytes = new byte[ipAddress.length];
+            for(int i = 0; i < ipAddress.length; i++)
+                ipAddressBytes[i] = ipAddress[i];
+            return Arrays.equals(localIp, ipAddressBytes);
+        } catch (UnknownHostException e) {
+            return false;
+        }
     }
 
 //    tcp, udp 확인용 / 추후 udp 확장 가능성 고려
@@ -198,8 +206,6 @@ public class InternetLayer extends Layer<PacketHeader> {
 
         for(int i = 0; i < fragmentCnt; ++i)
             fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
-
-//        IntStream.range(0, fragmentCnt).forEach(i -> {fragmentList.add(fragmentMap.get(i))});
 
         return fragmentList.toArray(new Byte[0]);
     }
