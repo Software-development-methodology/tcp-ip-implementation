@@ -5,6 +5,7 @@ import com.github.software_development_methodology_study.core.data.chunk.header.
 import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -15,8 +16,8 @@ public class InternetLayer extends Layer<PacketHeader> {
 
     /**
      * 패킷 식별용 클래스 <br>
-     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다.
-     * @author SeungminShin97
+     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다. <br>
+     * fragmentBuffer에 [FragmentKey, [Offset, Payload]] 형태로 저장
      */
     private class FragmentKey {
         private final String srcIp;
@@ -31,6 +32,11 @@ public class InternetLayer extends Layer<PacketHeader> {
             this.identification = identification;
         }
     }
+
+    /**
+     * 들어온 패킷들을 저장하는 Map
+     * [FragmentKey, [Offset, Payload]] 형태로 저장
+     */
     private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
 
 
@@ -40,12 +46,10 @@ public class InternetLayer extends Layer<PacketHeader> {
             throw new NullPointerException("Chunk is null");
 
         PacketHeader packetHeader = new PacketHeader();
-//        chunk.setHeader(packetHeader);
 
         extractChunkAndSetNewHeader(chunk, packetHeader);
 
-        // TODO: isLocalIPAddress 매개변수 수정
-        // 아이피 주소 확인
+        // 목적지 아이피 주소 확인
         if(!isLocalIPAddress(null))
             return;
 
@@ -114,8 +118,8 @@ public class InternetLayer extends Layer<PacketHeader> {
     }
 
     /**
-     * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱하여
-     * 새로운 PacketHeader에 세팅한 뒤, 해당 헤더를 청크에 주입.
+     * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱 <br>
+     * 새로운 PacketHeader에 세팅한 뒤, 해당 헤더를 청크에 주입. <br>
      * 버전, 길이, 식별자, 플래그, IP 주소 등 주요 필드를 바이트 배열로 변환해 설정.
      * @author judy78799
      */
