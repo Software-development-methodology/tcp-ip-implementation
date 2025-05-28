@@ -78,4 +78,32 @@ public class FrameHeader extends Header{
     public static FrameHeaderBuilder builder() {
         return new FrameHeaderBuilder();
     }
+
+    private enum HeaderField{
+        PREAMBLE(0, 8), // 시작 index, 길이
+        DESTINATION_MAC(8, 6),
+        SRC_MAC(14, 6),
+        TYPE(24, 2),
+        FCS(-4, 4);
+
+        private final int startIndex;
+        private final int length;
+
+        HeaderField(int startIndex, int length) {
+            this.startIndex = startIndex;
+            this.length = length;
+        }
+
+        public int getStartIndex(int totalLength) {
+            return startIndex >= 0 ? startIndex : (totalLength + startIndex);
+        }
+
+        public int getEndIndex(int totalLength) {
+            return (getStartIndex(totalLength) + length) -1;
+        }
+
+        public int getLength() {
+            return length;
+        }
+    }
 }
