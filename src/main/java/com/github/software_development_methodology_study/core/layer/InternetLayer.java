@@ -70,11 +70,47 @@ public class InternetLayer extends Layer<PacketHeader> {
 
     @Override
     public void send(Chunk<Header> chunk) {
-        PacketHeader ipHeader = new PacketHeader();
-        //헤더 설정
-
-        chunk.setHeader(ipHeader);
-        lowerLayer.send(chunk);
+        Byte[] payload = chunk.getPayload().getBytes();
+        int payloadLength = payload.length;
+        final int HEADER_SIZE = 20;
+        final int MTU = 1500;
+        final int FRAGMENT_SIZE = MTU - HEADER_SIZE;
+        int totalFragments = (int) Math.ceil((double) payloadLength / FRAGMENT_SIZE);
+        int identification = (int) (Math.random() * 65535);
+        for (int i = 0; i < totalFragments; i++) {
+            int offset = i * FRAGMENT_SIZE;
+            boolean isLast = (i == totalFragments - 1);
+            // 새로운 헤더 생성 (payload는 그대로)
+            PacketHeader header = new PacketHeader();
+            header.setVersion(new Byte[]{(byte) 4});
+            header.setIHL(new Byte[]{(byte) 5});
+            int fragmentPayloadSize = Math.min(FRAGMENT_SIZE, payloadLength - offset);
+            int totalLength = HEADER_SIZE + fragmentPayloadSize;
+            header.setTotal_Length(new Byte[]{
+                    (byte) ((totalLength >> 8) & 0xFF),
+                    (byte) (totalLength & 0xFF)
+            });
+            header.setIdentification(new Byte[]{
+                    (byte) ((identification >> 8) & 0xFF),
+                    (byte) (identification & 0xFF)
+            });
+            int offsetValue = offset / 8;
+            int flags = isLast ? 0b000 : 0b001;
+            int flagOffset = (flags << 13) | offsetValue;
+            header.setFlags(new Byte[]{(byte) ((flagOffset >> 8) & 0xE0)});
+            header.setFragment_Offset(new Byte[]{
+                    (byte) ((flagOffset >> 8) & 0x1F),
+                    (byte) (flagOffset & 0xFF)
+            });
+            header.setTTL(new Byte[]{(byte) 64});
+            header.setProtocol(new Byte[]{(byte) 6});
+            header.setHeader_Checksum(new Byte[]{0x00, 0x00});
+            header.setSource_Address(new Byte[]{127, 0, 0, 1});
+            header.setDestination_Address(new Byte[]{127, 0, 0, 1});
+            // chunk 내부 갱신 (payload는 동일)
+            chunk.setHeader(header);
+            lowerLayer.send(chunk); // 같은 payload, 다른 header로 여러 번 전송
+        }
     }
 
     /**
