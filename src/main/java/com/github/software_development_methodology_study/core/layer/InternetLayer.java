@@ -67,7 +67,7 @@ public class InternetLayer extends Layer<PacketHeader> {
         //  mergeFragments 매개변수 수정
         if(isLastFragment(null)) {
 //            FragmentKey fragmentKey = getFragmentKey();
-            Byte[] mergedFragment = mergeFragments(null, fragmentBuffer.get(null).size());
+            Byte[] mergedFragment = mergeFragments(null);
             chunk.setPayload(new Payload(mergedFragment));
             upperLayer.receive(chunk);
         }
@@ -199,12 +199,17 @@ public class InternetLayer extends Layer<PacketHeader> {
         // More Fragments
         return true;
     }
-
-    private Byte[] mergeFragments(FragmentKey fragmentKey, int fragmentCnt) {
+    /**
+     * 해당 패킷 키와 같은 종류의 패킷들을 합침
+     * @param fragmentKey 패킷 식별키
+     * @return 식별된 패킷들을 합친 패킷(세그먼트)
+     * @author SeungminShin97
+     */
+    private Byte[] mergeFragments(FragmentKey fragmentKey) {
         Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
         ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
 
-        for(int i = 0; i < fragmentCnt; ++i)
+        for(int i = 0; i < fragmentMap.size(); ++i)
             fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
 
         return fragmentList.toArray(new Byte[0]);
