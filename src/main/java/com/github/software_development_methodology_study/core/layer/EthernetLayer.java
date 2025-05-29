@@ -1,9 +1,12 @@
 package com.github.software_development_methodology_study.core.layer;
 
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
+import com.github.software_development_methodology_study.core.data.chunk.header.FrameHeader;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
-public class EthernetLayer extends Layer {
+import static com.github.software_development_methodology_study.common.util.TypeConverter.StringToByteArray;
+
+public class EthernetLayer extends Layer<FrameHeader> {
     @Override
     public void receive(Chunk chunk) {
         checkValidFrameSize(chunk);
@@ -32,7 +35,6 @@ public class EthernetLayer extends Layer {
     private void checkValidFrameSize(Chunk chunk) {
         int chunkSize = chunk.getPayload().getBytes().length + chunk.getHeader().getBytes().length;
 
-        System.out.println(chunkSize);
         if(chunkSize > 1514) throw new IllegalArgumentException("Frame size too large");
         if(chunkSize < 60) throw new IllegalArgumentException("Frame size too small");
     }
@@ -40,7 +42,6 @@ public class EthernetLayer extends Layer {
     private void checkValidFrameHeaderLessSize(Chunk chunk) {
         int chunkSize = chunk.getPayload().getBytes().length + chunk.getHeader().getBytes().length;
 
-        System.out.println(chunkSize);
         if(chunkSize > 1500) throw new IllegalArgumentException("FrameHeaderless chunk size too large");
         if(chunkSize < 46) throw new IllegalArgumentException("FrameHeaderless chunk size too small");
     }
