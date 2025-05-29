@@ -1,5 +1,6 @@
 package com.github.software_development_methodology_study.core.layer;
 
+import com.github.software_development_methodology_study.core.context.GlobalNicContext;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
@@ -25,6 +26,7 @@ public class GUILayer extends Layer<EmptyHeader> {
 
 
     public GUILayer() {
+        selectNicFromUser();
         frame = new JFrame(DEFAULT_FRAME_NAME);
         initFrame();
         initChatLogArea();
@@ -94,6 +96,38 @@ public class GUILayer extends Layer<EmptyHeader> {
         return setPanel;
     }
 
+    private void selectNicFromUser() {
+        java.util.List<org.pcap4j.core.PcapNetworkInterface> nics = GlobalNicContext.getNicList();
+        if (nics.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "사용 가능한 NIC가 없습니다.");
+            System.exit(1);
+        }
+
+        String[] nicOptions = new String[nics.size()];
+        for (int i = 0; i < nics.size(); i++) {
+            org.pcap4j.core.PcapNetworkInterface nic = nics.get(i);
+            nicOptions[i] = i + ": " + nic.getName() + " - " + nic.getDescription();
+        }
+
+        String selected = (String) JOptionPane.showInputDialog(
+                null,
+                "사용할 NIC를 선택하세요",
+                "NIC 선택",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                nicOptions,
+                nicOptions[0]
+        );
+
+        if (selected == null) {
+            JOptionPane.showMessageDialog(null, "NIC 선택이 취소되었습니다. 프로그램을 종료합니다.");
+            System.exit(0);
+        }
+
+        int selectedIndex = Integer.parseInt(selected.split(":")[0].trim());
+        GlobalNicContext.setCurrentContextByIndex(selectedIndex);
+        JOptionPane.showMessageDialog(null, "NIC 설정 완료: " + nicOptions[selectedIndex]);
+    }
     private void sendMessageButtonHandler() {
         String rawMessage = inputField.getText().trim();
         if (rawMessage.isEmpty() || currentIp.isBlank() || currentMac.isBlank()) {
@@ -158,5 +192,10 @@ public class GUILayer extends Layer<EmptyHeader> {
         public String toString() {
             return label;
         }
+    }
+
+    public static void main(String[] args) {
+        // Swing은 EDT(Event Dispatch Thread)에서 실행하는 게 원칙
+        javax.swing.SwingUtilities.invokeLater(GUILayer::new);
     }
 }
