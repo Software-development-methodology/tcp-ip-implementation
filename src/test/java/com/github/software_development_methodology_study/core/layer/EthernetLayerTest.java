@@ -29,6 +29,7 @@ class EthernetLayerTest {
     @Test
     void receive_에서_헤더_제거_후_payload_크기가_46byte_미만이면_illigalArgumentException이_발생한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[30];
         chunk.setPayload(new Payload(bytes));
 
@@ -38,6 +39,7 @@ class EthernetLayerTest {
     @Test
     void receive_에서_헤더_제거_후_payload_크기가_정확히_46byte면_예외가_발생하지_않는다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[46]; // 경계값
         chunk.setPayload(new Payload(bytes));
 
@@ -47,6 +49,7 @@ class EthernetLayerTest {
     @Test
     void receive_에서_헤더_제거_후_payload_크기가_1500byte_초과하면_illigalArgumentException이_발생한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1501];
         chunk.setPayload(new Payload(bytes));
 
@@ -56,6 +59,7 @@ class EthernetLayerTest {
     @Test
     void receive_에서_헤더_제거_후_payload_크기가_정확히_1500byte면_예외가_발생하지_않는다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1500]; // 경계값
         chunk.setPayload(new Payload(bytes));
 
@@ -65,6 +69,7 @@ class EthernetLayerTest {
     @Test
     void receive_호출_시_Chunk_크기가_60byte를_미만이면_illigalArgumentException이_발생한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[57];
         chunk.setPayload(new Payload(bytes));
 
@@ -74,6 +79,7 @@ class EthernetLayerTest {
     @Test
     void receive_호출_시_Chunk_크기가_정확히_60byte면_illigalArgumentException이_발생하지_않는다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[60]; // 경계값
         chunk.setPayload(new Payload(bytes));
 
@@ -84,6 +90,7 @@ class EthernetLayerTest {
     @Test
     void receive_호출_시_Chunk_크기가_1514byte_초과하면_illigalArgumentException이_발생한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1518];
         chunk.setPayload(new Payload(bytes));
 
@@ -93,6 +100,7 @@ class EthernetLayerTest {
     @Test
     void receive_호출_시_Chunk_크기가_정확히_1514byte면_illigalArgumentException이_발생하지_않는다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
+        chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1514]; // 경계값
         chunk.setPayload(new Payload(bytes));
 
