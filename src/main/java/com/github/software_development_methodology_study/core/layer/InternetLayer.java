@@ -5,22 +5,20 @@ import com.github.software_development_methodology_study.core.data.chunk.header.
 import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.IntStream;
 
 public class InternetLayer extends Layer<PacketHeader> {
 
     /**
      * 패킷 식별용 클래스 <br>
-     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다. <br>
-     * fragmentBuffer에 [FragmentKey, [Offset, Payload]] 형태로 저장
+     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다.
+     * @author SeungminShin97
      */
-    private class FragmentKey {
+    private  class FragmentKey {
         private final String srcIp;
         private final String dstIp;
         private final int protocol;
@@ -33,12 +31,7 @@ public class InternetLayer extends Layer<PacketHeader> {
             this.identification = identification;
         }
     }
-
-    /**
-     * 들어온 패킷들을 저장하는 Map
-     * [FragmentKey, [Offset, Payload]] 형태로 저장
-     */
-    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
+    public final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
 
 
     @Override
@@ -47,11 +40,13 @@ public class InternetLayer extends Layer<PacketHeader> {
             throw new NullPointerException("Chunk is null");
 
         PacketHeader packetHeader = new PacketHeader();
-
+//        chunk.setHeader(packetHeader);
+        PacketHeader header = (PacketHeader) chunk.getHeader();
         extractChunkAndSetNewHeader(chunk, packetHeader);
 
-        // 목적지 아이피 주소 확인
-        if(!isLocalIPAddress(packetHeader.getDestination_Address()))
+        // TODO: isLocalIPAddress 매개변수 수정
+        // 아이피 주소 확인
+        if(!isLocalIPAddress(null))
             return;
 
 //        프로토콜 별 처리
@@ -65,10 +60,14 @@ public class InternetLayer extends Layer<PacketHeader> {
         // TODO: isLastFragment 매개변수 수정,
         //  getFragmentKey 메서드 작성,
         //  mergeFragments 매개변수 수정
-        if(isLastFragment(null)) {
-//            FragmentKey fragmentKey = getFragmentKey();
-            Byte[] mergedFragment = mergeFragments(null);
-            chunk.setPayload(new Payload(mergedFragment));
+        
+        storeFragment(key, header, chunk.getPayload());
+        FragmentKey key = getFragmentKey(header);
+        
+        if (isLastFragment(header.getFlags(), header.getFragment_Offset())) {
+            Byte[] merged = mergeFragments(key, fragmentBuffer.get(key).size());
+            chunk.setPayload(new Payload(merged));
+            fragmentBuffer.remove(key);
             upperLayer.receive(chunk);
         }
     }
@@ -119,99 +118,178 @@ public class InternetLayer extends Layer<PacketHeader> {
     }
 
     /**
-     * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱 <br>
-     * 새로운 PacketHeader에 세팅한 뒤, 해당 헤더를 청크에 주입. <br>
+     * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱하여
+     * 새로운 PacketHeader에 세팅한 뒤, 해당 헤더를 청크에 주입.
      * 버전, 길이, 식별자, 플래그, IP 주소 등 주요 필드를 바이트 배열로 변환해 설정.
      * @author judy78799
      */
-    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader header) {
+    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader packetHeader) {
+        // IP 패킷 바이트 배열
         Byte[] lowerPayload = chunk.getPayload().getBytes();
         // 페이로드 에서 헤더 추출
-        if(lowerPayload.length < 20){
-            throw new IllegalArgumentException("유효하지 않은 헤더");
-        }
-        PacketHeader packetHeader = new PacketHeader();
-
+//        if(lowerPayload.length < 20){
+//            throw new IllegalArgumentException("여기서 부터 Options임.");
+//        }
+        packetHeader = new PacketHeader();
         // Version과 IHL (상위 4비트씩) 비트 마스크 사용
         int versionAndIHL = Byte.toUnsignedInt(lowerPayload[0]);
+        int ihl = versionAndIHL & 0x0F; //헤더의 8비트에서 하위 4비트만 추출
         int version = (versionAndIHL >> 4) & 0x0F;
-        int ihl = versionAndIHL & 0x0F;
 
-        int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
-        int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
+        if(ihl < 5) {
+            // 비정상 패킷 처리 (IHL 값 오류)
+            throw new IllegalArgumentException("Invalid IHL value: " + ihl);
+        } else if (ihl == 5) {
+            // 기본 헤더만 있음, 옵션과 패딩 없음
+            int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
+            int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
 
-        // Flags (3비트) + Fragment Offset (13비트)
-        int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
-        int flags = (flagsAndOffset >> 13) & 0x07;
-        int fragmentOffset = flagsAndOffset & 0x1FFF;
+            // Flags (3비트) + Fragment Offset (13비트)
+            int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
+            int flags = (flagsAndOffset >> 13) & 0x07;
+            int fragmentOffset = flagsAndOffset & 0x1FFF;
 
-        int ttl = Byte.toUnsignedInt(lowerPayload[8]);
-        int protocol = Byte.toUnsignedInt(lowerPayload[9]);
+            int ttl = Byte.toUnsignedInt(lowerPayload[8]);
+            int protocol = Byte.toUnsignedInt(lowerPayload[9]);
 
-        // 출발지 주소 Source IP (12~15)
-        int srcIp =
-                (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
-                        (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
-                        (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
-                        Byte.toUnsignedInt(lowerPayload[15]);
+            // 출발지 주소 Source IP (12~15)
+            int srcIpAdress =
+                    (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
+                            (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
+                            (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
+                            Byte.toUnsignedInt(lowerPayload[15]);
 
-        // 목적지 주소 Destination IP (16~19)
-        int dstIp =
-                (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
-                        (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
-                        (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
-                        Byte.toUnsignedInt(lowerPayload[19]);
+            // 목적지 주소 Destination IP (16~19)
+            int dstIpAdress =
+                    (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
+                            (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
+                            (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
+                            Byte.toUnsignedInt(lowerPayload[19]);
 
-        // PacketHeader에 값 주입
-        packetHeader.setVersion(new Byte[]{(byte)version}); //int -> Byte[]
-        packetHeader.setIHL(new Byte[]{(byte)ihl});
-        packetHeader.setTotal_Length(new Byte[]{(byte)totalLength});
-        packetHeader.setIdentification(new Byte[]{(byte)identification});
-        packetHeader.setFlags(new Byte[]{(byte)flags});
-        packetHeader.setFragment_Offset(new Byte[]{(byte)fragmentOffset});
-        packetHeader.setTTL(new Byte[]{(byte)ttl});
-        packetHeader.setProtocol(new Byte[]{(byte)protocol});
-        packetHeader.setSource_Address(new Byte[]{(byte)srcIp});
-        packetHeader.setDestination_Address(new Byte[]{(byte)dstIp});
+            // PacketHeader에 각 헤더 속성값 주입
+            packetHeader.setVersion(new Byte[]{(byte)version}); //int -> Byte[]
+            packetHeader.setIHL(new Byte[]{(byte)ihl});
+            packetHeader.setTotal_Length(new Byte[]{(byte)totalLength});
+            packetHeader.setIdentification(new Byte[]{(byte)identification});
+            packetHeader.setFlags(new Byte[]{(byte)flags});
+            packetHeader.setFragment_Offset(new Byte[]{(byte)fragmentOffset});
+            packetHeader.setTTL(new Byte[]{(byte)ttl});
+            packetHeader.setProtocol(new Byte[]{(byte)protocol});
+            packetHeader.setSource_Address(new Byte[]{(byte)srcIpAdress});
+            packetHeader.setDestination_Address(new Byte[]{(byte)dstIpAdress});
 
+        } else {
+            // ihl > 5 이면 옵션 처리(옵션 내부에 패딩)
+            int ipHeaderLength = ihl * 4; //20
+            int optionsLength = ipHeaderLength - 20; // 페이로드에서 뺀 나머지 값
+            Byte[] OptionsAndPadding = Arrays.copyOf(lowerPayload, ipHeaderLength);   //옵션+패딩이 포함된 IP 헤더 부분만 자름
+            // 하나의 옵션 Option Type(1 byte) + Option Length(1 byte) + Option Data(가변)
+
+
+            int offset = 0; //옵션을 처음부터 읽기 위함
+
+            byte optionType = OptionsAndPadding[offset];    //일단 옵션 하나 읽어옴.
+            //option 처리
+            while (offset < OptionsAndPadding.length) { //offset++ -> offset >= OptionsAndPadding.length -> 종료
+                int type = Byte.toUnsignedInt(OptionsAndPadding[offset]);  //첫 번째 type
+                int length = Byte.toUnsignedInt(OptionsAndPadding[offset + 1]); //첫번째 Option의 길이
+
+                if (type == 0 || length < 2) { // EOL 옵션 영역 전체 순회 완료
+                    break;
+                } else if (type == 1) { // NOP
+                    offset += 1;
+                } else if (offset + 1 >= OptionsAndPadding.length) { // NOP
+                    break;
+                } else {
+                    // 옵션 데이터는 [offset + 2]부터 [offset + length - 1]까지
+                    offset += length; //다음 옵션 읽어오기 옵션을 나누는 기준
+                }
+            }
+        }
         // Header에 필드 주입
         chunk.setHeader(packetHeader); //PacketHeader
     }
 
     // TODO: 아이피 확인 메서드 구현
     private boolean isLocalIPAddress(Byte[] ipAddress) {
-        try {
-            byte[] localIp = InetAddress.getLocalHost().getAddress();
-            byte[] ipAddressBytes = new byte[ipAddress.length];
-            for(int i = 0; i < ipAddress.length; i++)
-                ipAddressBytes[i] = ipAddress[i];
-            return Arrays.equals(localIp, ipAddressBytes);
-        } catch (UnknownHostException e) {
-            return false;
-        }
+        // 아이피 확인
+        return true;
     }
 
 //    tcp, udp 확인용 / 추후 udp 확장 가능성 고려
 //    private Protocol getProtocol(Byte[] protocol) {}
 
-    // TODO: 마지막 프래그먼트 확인 메서드 구현
-    private boolean isLastFragment(Byte[] MF) {
-        // More Fragments
-        return true;
-    }
-    /**
-     * 해당 패킷 키와 같은 종류의 패킷들을 합침
-     * @param fragmentKey 패킷 식별키
-     * @return 식별된 패킷들을 합친 패킷(세그먼트)
-     * @author SeungminShin97
-     */
-    private Byte[] mergeFragments(FragmentKey fragmentKey) {
-        Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
-        ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
+    // 마지막 프래그먼트 확인
+    private boolean isLastFragment(Byte[] flagsBytes, Byte[] offsetBytes) {
+        if (flagsBytes == null || offsetBytes == null
+                || flagsBytes.length < 1 || offsetBytes.length < 2)
+            throw new IllegalArgumentException("Flags 또는 Offset 필드가 유효하지 않습니다."); // 필드가 유효하지 않으면 예외 처리
 
-        for(int i = 0; i < fragmentMap.size(); ++i)
-            fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
+        int flags = Byte.toUnsignedInt(flagsBytes[0]) >> 5; // Flags 필드의 상위 3비트 추출 (Reserved, DF, MF)
+        int mfBit = flags & 0b1; // MF가 0이면 마지막 조각
 
-        return fragmentList.toArray(new Byte[0]);
+        return mfBit == 0;
     }
+
+    //조각 병합
+    private Byte[] mergeFragments(FragmentKey fragmentKey, int fragmentCnt) {
+        Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey); // 해당 조각 키로 저장된 조각 맵 가져오기
+
+        if (fragmentMap == null || fragmentMap.isEmpty())
+            throw new IllegalStateException("병합할 조각이 없습니다."); // 조각이 없으면 병합할 수 없음
+
+        // offset 기준 정렬
+        ArrayList<Integer> offsets = new ArrayList<>(fragmentMap.keySet()); // offset 리스트 수집
+            Collections.sort(offsets); // offset 순으로 정렬
+
+        ArrayList<Byte> merged = new ArrayList<>(); // 병합된 데이터를 담을 리스트
+
+        for (Integer offset : offsets) {
+            Byte[] piece = fragmentMap.get(offset); // 각 offset에 해당하는 조각 가져오기
+            if (piece != null)
+                merged.addAll(Arrays.asList(piece)); // 조각을 병합 리스트에 추가
+        }
+
+        return merged.toArray(new Byte[0]); // 최종 Byte[] 배열로 변환 후 반환
+    }
+
+    // 조각 구분 키 생성
+    private FragmentKey getFragmentKey(PacketHeader header) {
+        String srcIp = ipBytesToString(header.getSource_Address()); // 출발지 IP 문자열로 변환
+        String dstIp = ipBytesToString(header.getDestination_Address()); // 목적지 IP 문자열로 변환
+
+        int protocol = Byte.toUnsignedInt(header.getProtocol()[0]); // 프로토콜 값 (1바이트 → int)
+
+        // Identification: 상위 1바이트 << 8 + 하위 1바이트 = 16비트 정수
+        int identification = (Byte.toUnsignedInt(header.getIdentification()[0]) << 8)
+                | Byte.toUnsignedInt(header.getIdentification()[1]);
+
+        return new FragmentKey(srcIp, dstIp, protocol, identification); // FragmentKey 생성 후 반환
+    }
+
+
+    //조각 저장
+    private void storeFragment(FragmentKey key, PacketHeader header, Payload payload) {
+        int rawOffset = (Byte.toUnsignedInt(header.getFragment_Offset()[0]) << 8) // Fragment Offset: 2바이트 → 16비트 정수로 변환
+                | Byte.toUnsignedInt(header.getFragment_Offset()[1]);
+        int offset = rawOffset & 0x1FFF;  //상위 3비트 flags 제거
+
+        System.out.println(">>> Storing offset: " + offset + " → " + Arrays.toString(payload.getBytes()));
+
+        fragmentBuffer.putIfAbsent(key, new ConcurrentHashMap<>()); // 키가 없으면 조각 저장용 맵 초기화
+        fragmentBuffer.get(key).put(offset, payload.getBytes()); // offset 위치에 조각 바이트 저장
+    }
+
+    //Byte[] → 문자열 IP 주소
+    private String ipBytesToString(Byte[] ip) {
+        if (ip == null || ip.length != 4) return "0.0.0.0"; // IP가 유효하지 않으면 기본값 반환
+
+        // 각 바이트를 부호 없는 int로 변환하여 "."으로 연결된 문자열 반환
+        return String.format("%d.%d.%d.%d",
+                Byte.toUnsignedInt(ip[0]),
+                Byte.toUnsignedInt(ip[1]),
+                Byte.toUnsignedInt(ip[2]),
+                Byte.toUnsignedInt(ip[3]));
+    }
+
 }
