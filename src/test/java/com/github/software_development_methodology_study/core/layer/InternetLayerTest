@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
 import com.github.software_development_methodology_study.core.layer.InternetLayer;
+
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InternetLayerTest {
@@ -47,7 +49,7 @@ public class InternetLayerTest {
         };
 
         assertArrayEquals(expected, result);
-
+        System.out.println("Merged Result: " + Arrays.toString(result));
         internetLayer.fragmentBuffer.remove(key);
         assertFalse(internetLayer.fragmentBuffer.containsKey(key));
     }
