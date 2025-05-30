@@ -61,9 +61,9 @@ public class FrameHeader extends Header{
     }
 
     private enum HeaderField{
-        DESTINATION_MAC(8, 6),
-        SRC_MAC(14, 6),
-        TYPE(24, 2);
+        DESTINATION_MAC(0, 6),
+        SRC_MAC(6, 6),
+        TYPE(12, 2);
 
         private final int startIndex;
         private final int length;
