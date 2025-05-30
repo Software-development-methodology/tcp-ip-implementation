@@ -5,6 +5,7 @@ import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+import com.github.software_development_methodology_study.core.dto.ActivateNic;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -137,6 +138,7 @@ public class GUILayer extends Layer<EmptyHeader> {
         GlobalNicContext.setCurrentContextByIndex(selectedIndex);
         JOptionPane.showMessageDialog(null, "NIC 설정 완료: " + nicOptions[selectedIndex]);
     }
+
     private void sendMessageButtonHandler() {
         String rawMessage = inputField.getText().trim();
         if (rawMessage.isEmpty() || currentIp.isBlank() || currentMac.isBlank()) {
@@ -181,9 +183,21 @@ public class GUILayer extends Layer<EmptyHeader> {
     }
 
     @Override
-    public void send(Chunk<Header> chunk) {
+    public void receive(Chunk<EmptyHeader> chunk, ActivateNic activateNic) {
+        String message = ByteArrayToString(chunk.getPayload().getBytes());
+        generateChatLogMessage(message, ChatLogMode.RECEIVE);
+    }
+
+//    @Override
+//    public void send(Chunk<Header> chunk) {
+//        System.out.println(Arrays.toString(chunk.getPayload().getBytes()));
+//        this.lowerLayer.send(chunk);
+//    }
+
+    @Override
+    public void send(Chunk<Header> chunk, ActivateNic activateNic) {
         System.out.println(Arrays.toString(chunk.getPayload().getBytes()));
-        this.lowerLayer.send(chunk);
+        this.lowerLayer.send(chunk,  activateNic);
     }
 
 
