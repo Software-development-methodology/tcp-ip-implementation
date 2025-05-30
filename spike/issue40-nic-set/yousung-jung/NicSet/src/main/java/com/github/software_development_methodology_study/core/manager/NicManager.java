@@ -28,13 +28,16 @@ public final class NicManager {
 
     private NicManager(){}
 
+    public static List<PcapNetworkInterface> getNicList() {
+        return nicList;
+    }
+
 
     public static void setCurrentContext(PcapNetworkInterface pcapNetworkInterface) {
         currentContext = pcapNetworkInterface;
     }
 
     public static PcapNetworkInterface getCurrentContext() {
-        // currentContext.openLive()...
         return currentContext;
     }
 }
