@@ -6,6 +6,7 @@ import com.github.software_development_methodology_study.core.data.chunk.header.
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import javax.swing.*;
 import java.awt.*;
@@ -106,7 +107,15 @@ public class GUILayer extends Layer<EmptyHeader> {
         String[] nicOptions = new String[nics.size()];
         for (int i = 0; i < nics.size(); i++) {
             org.pcap4j.core.PcapNetworkInterface nic = nics.get(i);
-            nicOptions[i] = i + ": " + nic.getName() + " - " + nic.getDescription();
+            if(!nic.getLinkLayerAddresses().isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                for (byte b : nic.getLinkLayerAddresses().get(0).getAddress()) {
+                    sb.append(String.format("%02x", b));
+                }
+                nicOptions[i] = MessageFormat.format("{0}: {1} - {2}", i, nic.getName(), sb.toString());
+            } else {
+                nicOptions[i] = i + ": " + nic.getName() + " - " + " ";
+            }
         }
 
         String selected = (String) JOptionPane.showInputDialog(
