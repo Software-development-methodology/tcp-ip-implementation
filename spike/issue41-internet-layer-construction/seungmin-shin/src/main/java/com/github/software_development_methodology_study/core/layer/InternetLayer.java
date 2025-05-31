@@ -81,12 +81,14 @@ public class InternetLayer extends Layer<PacketHeader> {
 
         // TODO: fragmentBuffer에 헤더 넣기..
         // fragmentBuffer에 fragment 저장
-        storeFragmentToFragmentBuffer(packetHeader, chunk.getPayload());
+        FragmentKey fragmentKey = getFragmentKey(packetHeader);
+
+        storeFragmentToFragmentBuffer(fragmentKey, packetHeader.getFragment_Offset(), chunk.getPayload());
 
         // TODO: getFragmentKey 메서드 작성,
         //  mergeFragments 매개변수 수정
         if(isLastFragment(packetHeader.getFlags())) {
-            Byte[] mergedFragment = mergeFragments(null);
+            Byte[] mergedFragment = mergeFragments(fragmentKey);
             chunk.setPayload(new Payload(mergedFragment));
             upperLayer.receive(chunk);
         }
@@ -222,30 +224,40 @@ public class InternetLayer extends Layer<PacketHeader> {
      * fragment를 fragmentBuffer에 저장하는 메서드 <br>
      * 기존에 fragmentKey가 있는지 확인 후 없으면 생성 <br>
      * InternetLayer의 Header로 fragmentKey를 생성한다. <br>
-     * @param packetHeader InternetLayer 헤더
+     * @param fragmentKey key
+     * @param offset 패킷의 순서
      * @param payload InternetLayer 페이로드
      */
-    private void storeFragmentToFragmentBuffer(PacketHeader packetHeader, Payload payload) {
+    private void storeFragmentToFragmentBuffer(FragmentKey fragmentKey, Byte[] offset, Payload payload) {
         // 들어온 패킷 정보로 key 생성
-        FragmentKey fragmentKey = new FragmentKey(
-                packetHeader.getSource_Address(),
-                packetHeader.getDestination_Address(),
-                packetHeader.getProtocol(),
-                packetHeader.getIdentification());
+        int offsetToInt = byteArrayToInt(offset);
 
         if(fragmentBuffer.containsKey(fragmentKey)) {
             // 기존에 key가 있으면 기존 key에 <offset, payload> 저장
-            fragmentBuffer.get(fragmentKey).put(byteArrayToInt(packetHeader.getFragment_Offset()), payload.getBytes());
+            fragmentBuffer.get(fragmentKey).put(offsetToInt, payload.getBytes());
         } else {
             // 새로운 key 생성 후 <offset, payload> 저장
             ConcurrentHashMap<Integer, Byte[]> newMap = new ConcurrentHashMap<>();
-            newMap.put(byteArrayToInt(packetHeader.getFragment_Offset()), payload.getBytes());
+            newMap.put(offsetToInt, payload.getBytes());
             fragmentBuffer.put(fragmentKey, newMap);
         }
 
     }
 
 
+    /**
+     * 패킷을 구별하기 위한 key <br>
+     * srcIp, dstIp, protocol, identification 4가지를 가지고 key를 만듬
+     * @param packetHeader 현재 레이어의 Header
+     * @return key
+     */
+    private FragmentKey getFragmentKey(PacketHeader packetHeader) {
+        return new FragmentKey(
+                packetHeader.getSource_Address(),
+                packetHeader.getDestination_Address(),
+                packetHeader.getProtocol(),
+                packetHeader.getIdentification());
+    }
 
     /**
      * 해당 패킷 키와 같은 종류의 패킷들을 합침
