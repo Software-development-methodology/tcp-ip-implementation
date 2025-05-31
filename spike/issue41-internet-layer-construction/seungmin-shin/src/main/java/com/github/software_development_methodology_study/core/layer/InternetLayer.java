@@ -28,7 +28,6 @@ public class InternetLayer extends Layer<PacketHeader> {
                 Byte[] protocol,
                 Byte[] identification
         ) {
-
         @Override
             public boolean equals(Object obj) {
                 if (this == obj) return true;
@@ -84,10 +83,9 @@ public class InternetLayer extends Layer<PacketHeader> {
         // fragmentBuffer에 fragment 저장
         storeFragmentToFragmentBuffer(packetHeader, chunk.getPayload());
 
-        // TODO: isLastFragment 매개변수 수정,
-        //  getFragmentKey 메서드 작성,
+        // TODO: getFragmentKey 메서드 작성,
         //  mergeFragments 매개변수 수정
-        if(isLastFragment(null)) {
+        if(isLastFragment(packetHeader.getFlags())) {
             Byte[] mergedFragment = mergeFragments(null);
             chunk.setPayload(new Payload(mergedFragment));
             upperLayer.receive(chunk);
@@ -216,9 +214,8 @@ public class InternetLayer extends Layer<PacketHeader> {
 //    private Protocol getProtocol(Byte[] protocol) {}
 
     // TODO: 마지막 프래그먼트 확인 메서드 구현
-    private boolean isLastFragment(Byte[] MF) {
-        // More Fragments
-        return true;
+    private boolean isLastFragment(Byte[] flags) {
+        return (flags[0] & 0x1) == 0;
     }
 
     /**
