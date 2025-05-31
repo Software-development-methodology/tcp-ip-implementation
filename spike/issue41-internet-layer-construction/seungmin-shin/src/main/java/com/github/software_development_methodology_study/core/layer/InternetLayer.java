@@ -17,45 +17,39 @@ import java.util.stream.IntStream;
 public class InternetLayer extends Layer<PacketHeader> {
 
     /**
-     * 패킷 식별용 클래스 <br>
-     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다. <br>
-     * 필드들은 Byte[] 로 저장 <br>
-     * fragmentBuffer에 [FragmentKey, [Offset, Payload]] 형태로 저장
-     */
-    private class FragmentKey {
-        private final Byte[] srcIp;
-        private final Byte[] dstIp;
-        private final Byte[] protocol;
-        private final Byte[] identification;
-
-        public FragmentKey(Byte[] srcIp, Byte[] dstIp, Byte[] protocol, Byte[] identification) {
-            this.srcIp = srcIp;
-            this.dstIp = dstIp;
-            this.protocol = protocol;
-            this.identification = identification;
-        }
+         * 패킷 구분용 클래스 <br>
+         * 패킷은 srcIp, dstIp, protocol, identification 4가지 필드로 구분한다. <br>
+         * 필드들은 Byte[] 로 저장 <br>
+         * fragmentBuffer에 [FragmentKey, [Offset, Payload]] 형태로 저장
+         */
+        private record FragmentKey(
+                Byte[] srcIp,
+                Byte[] dstIp,
+                Byte[] protocol,
+                Byte[] identification
+        ) {
 
         @Override
-        public boolean equals(Object obj) {
-            if (this ==  obj) return true;
-            if (obj == null || this.getClass() != obj.getClass()) return false;
-            FragmentKey key = (FragmentKey) obj;
-            return (Arrays.equals(this.srcIp, key.srcIp)
-                    && Arrays.equals(this.dstIp, key.dstIp)
-                    && Arrays.equals(this.protocol, key.protocol)
-                    && Arrays.equals(this.identification, key.identification));
-        }
+            public boolean equals(Object obj) {
+                if (this == obj) return true;
+                if (obj == null || this.getClass() != obj.getClass()) return false;
+                FragmentKey key = (FragmentKey) obj;
+                return (Arrays.equals(this.srcIp, key.srcIp)
+                        && Arrays.equals(this.dstIp, key.dstIp)
+                        && Arrays.equals(this.protocol, key.protocol)
+                        && Arrays.equals(this.identification, key.identification));
+            }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(
-                    Arrays.hashCode(srcIp),
-                    Arrays.hashCode(dstIp),
-                    Arrays.hashCode(protocol),
-                    Arrays.hashCode(identification)
-            );
+            @Override
+            public int hashCode() {
+                return Objects.hash(
+                        Arrays.hashCode(srcIp),
+                        Arrays.hashCode(dstIp),
+                        Arrays.hashCode(protocol),
+                        Arrays.hashCode(identification)
+                );
+            }
         }
-    }
 
     /**
      * 들어온 패킷들을 저장하는 Map
