@@ -215,7 +215,6 @@ public class InternetLayer extends Layer<PacketHeader> {
 //    tcp, udp 확인용 / 추후 udp 확장 가능성 고려
 //    private Protocol getProtocol(Byte[] protocol) {}
 
-    // TODO: 마지막 프래그먼트 확인 메서드 구현
     private boolean isLastFragment(Byte[] flags) {
         return (flags[0] & 0x1) == 0;
     }
@@ -269,8 +268,13 @@ public class InternetLayer extends Layer<PacketHeader> {
         Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
         ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
 
-        for(int i = 0; i < fragmentMap.size(); ++i)
-            fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
+        // @MEETING: 전에 호영님이 말씀하셨던 패킷이 순서대로 들어오지 않는 문제 & 혹시 유실 됐을 때
+        for(int i = 0; i < fragmentMap.size(); ++i) {
+            if(fragmentMap.containsKey(i))
+                fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
+            else
+                throw new RuntimeException((i + 1) + "번 째 패킷이 없습니다.");
+        }
 
         return fragmentList.toArray(new Byte[0]);
     }
