@@ -7,10 +7,7 @@ import com.github.software_development_methodology_study.core.data.chunk.payload
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
@@ -61,7 +58,7 @@ public class InternetLayer extends Layer<PacketHeader> {
     @Override
     public void receive(Chunk<Header> chunk) {
         if(chunk.getPayload() == null)
-            throw new NullPointerException("Chunk is null");
+            throw new IllegalArgumentException("Payload가 비어있습니다.");
 
         PacketHeader packetHeader = new PacketHeader();
 
@@ -73,20 +70,10 @@ public class InternetLayer extends Layer<PacketHeader> {
         if(!isLocalIPAddress(packetHeader.getDestination_Address()))
             return;
 
-//        프로토콜 별 처리
-//        -> tcp는 마지막 프래그먼트면 바로 합치고 올릴 수 있음<신뢰성>
-//        -> UDP는 비신뢰성이라 다 오는 것 확인해야함
-//        근데 굳이 나눠야 하나? UDP 안할 것 같은디
-//        Protocol protocol = getProtocol(null);
-
-        // TODO: fragmentBuffer에 헤더 넣기..
         // fragmentBuffer에 fragment 저장
         FragmentKey fragmentKey = getFragmentKey(packetHeader);
-
         storeFragmentToFragmentBuffer(fragmentKey, packetHeader.getFragment_Offset(), chunk.getPayload());
 
-        // TODO: getFragmentKey 메서드 작성,
-        //  mergeFragments 매개변수 수정
         if(isLastFragment(packetHeader.getFlags())) {
             Byte[] mergedFragment = mergeFragments(fragmentKey);
             chunk.setPayload(new Payload(mergedFragment));
@@ -228,7 +215,6 @@ public class InternetLayer extends Layer<PacketHeader> {
      * @param payload InternetLayer 페이로드
      */
     private void storeFragmentToFragmentBuffer(FragmentKey fragmentKey, Byte[] offset, Payload payload) {
-        // 들어온 패킷 정보로 key 생성
         int offsetToInt = byteArrayToInt(offset);
 
         if(fragmentBuffer.containsKey(fragmentKey)) {
@@ -240,7 +226,6 @@ public class InternetLayer extends Layer<PacketHeader> {
             newMap.put(offsetToInt, payload.getBytes());
             fragmentBuffer.put(fragmentKey, newMap);
         }
-
     }
 
 
@@ -273,7 +258,7 @@ public class InternetLayer extends Layer<PacketHeader> {
             if(fragmentMap.containsKey(i))
                 fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
             else
-                throw new RuntimeException((i + 1) + "번 째 패킷이 없습니다.");
+                throw new NoSuchElementException("패킷이 유실되었습니다.");
         }
 
         return fragmentList.toArray(new Byte[0]);
