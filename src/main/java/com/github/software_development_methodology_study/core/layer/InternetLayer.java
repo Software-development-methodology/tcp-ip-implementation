@@ -88,139 +88,120 @@ public class InternetLayer extends Layer<PacketHeader> {
      * 버전, 길이, 식별자, 플래그, IP 주소 등 주요 필드를 바이트 배열로 변환해 설정.
      * @author judy78799
      */
-    private void extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader packetHeader) {
-        // IP 패킷 바이트 배열
+    private Byte[] extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader packetHeader) {
+        // Ethernet Layer에서 받은 페이로드 (Byte[] 타입)
         Byte[] lowerPayload = chunk.getPayload().getBytes();
 
         packetHeader = new PacketHeader();
-        int versionAndIHL = Byte.toUnsignedInt(lowerPayload[0]);    // Version과 IHL (상위 4비트씩) 비트 마스크 사용
-        //TODO: ihl은 4바이트가 되어야 함.
-        int ihl = versionAndIHL & 0x0F; //헤더의 8비트에서 하위 4비트만 추출
+        int versionAndIHL = Byte.toUnsignedInt(lowerPayload[0]);
+        int ihl = versionAndIHL & 0x0F;
         int version = (versionAndIHL >> 4) & 0x0F;
-    /*
-    (if 를 2번만 쓰자~)
-    if 예외처리
-    헤더만 세팅 -> 5이상으로 들어올 경우
-    if(ihl > 5) 옵션세팅
-     */
+
+        // 예외처리
         if (ihl < 5) {
-            // 비정상 패킷 처리 (IHL 값 오류)
             throw new IllegalArgumentException("Invalid IHL value: " + ihl);
-        } else if (ihl == 5) {
-            // 기본 헤더만 있음, 옵션과 패딩 없음
-            int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
-            int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
-
-            // Flags (3비트) + Fragment Offset (13비트)
-            int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
-            int flags = (flagsAndOffset >> 13) & 0x07;
-            int fragmentOffset = flagsAndOffset & 0x1FFF;
-
-            int ttl = Byte.toUnsignedInt(lowerPayload[8]);
-            int protocol = Byte.toUnsignedInt(lowerPayload[9]);
-
-            // 출발지 주소 Source IP (12~15)
-            int srcIpAdress =
-                    (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
-                            (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
-                            (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
-                            Byte.toUnsignedInt(lowerPayload[15]);
-
-            // 목적지 주소 Destination IP (16~19)
-            int dstIpAdress =
-                    (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
-                            (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
-                            (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
-                            Byte.toUnsignedInt(lowerPayload[19]);
-            packetHeader.setVersion(new Byte[]{(byte) version}); //int -> Byte[]
-            packetHeader.setIHL(new Byte[]{(byte) ihl});
-            packetHeader.setTotal_Length(new Byte[]{(byte) totalLength});
-            packetHeader.setIdentification(new Byte[]{(byte) identification});
-            packetHeader.setFlags(new Byte[]{(byte) flags});
-            packetHeader.setFragment_Offset(new Byte[]{(byte) fragmentOffset});
-            packetHeader.setTTL(new Byte[]{(byte) ttl});
-            packetHeader.setProtocol(new Byte[]{(byte) protocol});
-            packetHeader.setSource_Address(new Byte[]{(byte) srcIpAdress});
-            packetHeader.setDestination_Address(new Byte[]{(byte) dstIpAdress});
         }
-        else if (ihl > 5 && ihl <= 15) {//옵션 + 패딩 처리
-            int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
-            int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
 
-            // Flags (3비트) + Fragment Offset (13비트)
-            int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
-            int flags = (flagsAndOffset >> 13) & 0x07;
-            int fragmentOffset = flagsAndOffset & 0x1FFF;
+        // 기본 헤더 필드 파싱 (ihl * 4 바이트 헤더)
+        int totalLength = (Byte.toUnsignedInt(lowerPayload[2]) << 8) | Byte.toUnsignedInt(lowerPayload[3]);
+        int identification = (Byte.toUnsignedInt(lowerPayload[4]) << 8) | Byte.toUnsignedInt(lowerPayload[5]);
 
-            int ttl = Byte.toUnsignedInt(lowerPayload[8]);
-            int protocol = Byte.toUnsignedInt(lowerPayload[9]);
+        int flagsAndOffset = (Byte.toUnsignedInt(lowerPayload[6]) << 8) | Byte.toUnsignedInt(lowerPayload[7]);
+        int flags = (flagsAndOffset >> 13) & 0x07;
+        int fragmentOffset = flagsAndOffset & 0x1FFF;
 
-            // 출발지 주소 Source IP (12~15)
-            int srcIpAdress =
-                    (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
-                            (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
-                            (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
-                            Byte.toUnsignedInt(lowerPayload[15]);
+        int ttl = Byte.toUnsignedInt(lowerPayload[8]);
+        int protocol = Byte.toUnsignedInt(lowerPayload[9]);
 
-            // 목적지 주소 Destination IP (16~19)
-            int dstIpAdress =
-                    (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
-                            (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
-                            (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
-                            Byte.toUnsignedInt(lowerPayload[19]);
+        int srcIpAddress =
+                (Byte.toUnsignedInt(lowerPayload[12]) << 24) |
+                        (Byte.toUnsignedInt(lowerPayload[13]) << 16) |
+                        (Byte.toUnsignedInt(lowerPayload[14]) << 8) |
+                        Byte.toUnsignedInt(lowerPayload[15]);
 
-            //옵션 작업
-            // ihl > 5 이면 옵션 처리(옵션 내부에 패딩)
-            int ipHeaderLength = ihl * 4; //20
-            int optionsAndPaddingLength = lowerPayload.length - ipHeaderLength;  //페이로드 전체에서 iPHeader를 뺀 나머지
-            Byte[] OptionsAndPadding = Arrays.copyOf(lowerPayload, optionsAndPaddingLength);   //옵션+패딩이 포함된 IP 헤더 부분만 자름
-            // 하나의 옵션 Option Type(1 byte) + Option Length(1 byte) + Option Data(가변)
-            //바이트랑 int 계산 때문에 혼란옴..
+        int dstIpAddress =
+                (Byte.toUnsignedInt(lowerPayload[16]) << 24) |
+                        (Byte.toUnsignedInt(lowerPayload[17]) << 16) |
+                        (Byte.toUnsignedInt(lowerPayload[18]) << 8) |
+                        Byte.toUnsignedInt(lowerPayload[19]);
 
-            int offset = 0; //옵션을 처음부터 읽는 index
+        // packetHeader 필드 세팅 부분
+        packetHeader.setVersion(new Byte[]{(byte) version});
+        packetHeader.setIHL(new Byte[]{(byte) ihl});
+        packetHeader.setTotal_Length(new Byte[]{(byte)(totalLength >> 8), (byte)(totalLength & 0xFF)});
+        packetHeader.setIdentification(new Byte[]{(byte)(identification >> 8), (byte)(identification & 0xFF)});
+        packetHeader.setFlags(new Byte[]{(byte) flags});
+        packetHeader.setFragment_Offset(new Byte[]{(byte)(fragmentOffset >> 8), (byte)(fragmentOffset & 0xFF)});
+        packetHeader.setTTL(new Byte[]{(byte) ttl});
+        packetHeader.setProtocol(new Byte[]{(byte) protocol});
+        packetHeader.setSource_Address(new Byte[]{
+                (byte)(srcIpAddress >> 24), (byte)((srcIpAddress >> 16) & 0xFF),
+                (byte)((srcIpAddress >> 8) & 0xFF), (byte)(srcIpAddress & 0xFF)});
+        packetHeader.setDestination_Address(new Byte[]{
+                (byte)(dstIpAddress >> 24), (byte)((dstIpAddress >> 16) & 0xFF),
+                (byte)((dstIpAddress >> 8) & 0xFF), (byte)(dstIpAddress & 0xFF)});
+
+        Byte[] ipHeaderBytes;
+
+        if (ihl == 5) {
+            // 옵션 없는 경우: 기본 헤더 20바이트만 추출
+            ipHeaderBytes = Arrays.copyOf(lowerPayload, 20);
+            packetHeader.setOptions(new Byte[0]);
+            packetHeader.setPadding(new Byte[0]);
+        } else {
+            // 옵션 + 패딩 처리 경우
+            int ipHeaderLength = ihl * 4;
+
+            // 옵션+패딩 부분만 lowerPayload에서 추출 (20 ~ ipHeaderLength 까지)
+            Byte[] optionsAndPadding = Arrays.copyOfRange(lowerPayload, 20, ipHeaderLength);
+
+            // 옵션 파싱 부분 (EOL 나오면 break)
+            int offset = 0;
             int totalOptionLength = 0;
-            //옵션 타입을 체크 -> 옵션 길이를 체크 하는 식으로 반복문으로 option만의 길이를 읽어옴.
-            byte optionType = OptionsAndPadding[offset];    //일단 옵션 하나 읽어옴.
-            //option 전체를 읽어오는 반복문
-            while (offset < OptionsAndPadding.length) { //offset++ -> offset >= OptionsAndPadding.length -> 종료
-                int type = Byte.toUnsignedInt(OptionsAndPadding[offset]);  //첫 번째 type
-                int length = Byte.toUnsignedInt(OptionsAndPadding[offset + 1]); //첫번째 Option의 길이
-
-                if (type == 0 || length < 2) { // EOL 옵션 영역 전체 순회 완료
-                    throw new IllegalArgumentException("Invalid option type: " + type);
-                    //빠져나왔을 경우 offset이 끝가지 가지 못함.
+            while (offset < optionsAndPadding.length) {
+                int type = Byte.toUnsignedInt(optionsAndPadding[offset]);
+                if (type == 0) { // EOL
+                    totalOptionLength = offset + 1;
+                    break;
                 } else if (type == 1) { // NOP
                     offset += 1;
                     totalOptionLength += 1;
-                } else if (offset + 1 >= OptionsAndPadding.length) { // NOP
-                    break;
                 } else {
-                    // 옵션 데이터는 [offset + 2]부터 [offset + length - 1]까지
-                    offset += length; //다음 옵션 읽어오기 옵션을 나누는 기준
+                    if (offset + 1 >= optionsAndPadding.length) {
+                        // 옵션 길이 못 읽으면 중단
+                        break;
+                    }
+                    int length = Byte.toUnsignedInt(optionsAndPadding[offset + 1]);
+                    if (length < 2) {
+                        throw new IllegalArgumentException("Invalid option length: " + length);
+                    }
+                    offset += length;
                     totalOptionLength += length;
                 }
-                //이거 나머지   = 4가되는 조건으로 + 1
-                int Padding = (4-(totalOptionLength %  4)) % 4;
-                System.out.println("offset 길이 : " + optionType);
-                System.out.println("Option 길이 : " + totalOptionLength);
-                System.out.println("Padding 길이: " + Padding);
             }
-            packetHeader.setVersion(new Byte[]{(byte) version}); //int -> Byte[]
-            packetHeader.setIHL(new Byte[]{(byte) ihl});
-            packetHeader.setTotal_Length(new Byte[]{(byte) totalLength});
-            packetHeader.setIdentification(new Byte[]{(byte) identification});
-            packetHeader.setFlags(new Byte[]{(byte) flags});
-            packetHeader.setFragment_Offset(new Byte[]{(byte) fragmentOffset});
-            packetHeader.setTTL(new Byte[]{(byte) ttl});
-            packetHeader.setProtocol(new Byte[]{(byte) protocol});
-            packetHeader.setSource_Address(new Byte[]{(byte) srcIpAdress});
-            packetHeader.setDestination_Address(new Byte[]{(byte) dstIpAdress});
-            packetHeader.setOptions(new Byte[]{(byte) totalOptionLength});
-            packetHeader.setPadding(new Byte[]{(byte) totalOptionLength});
+
+            // 패딩 계산 부분
+            int paddingLength = (4 - (totalOptionLength % 4)) % 4;
+            int fullOptionLength = totalOptionLength + paddingLength;
+
+            // 옵션+패딩 전체 배열 부분
+            Byte[] fullOptionsAndPadding = new Byte[fullOptionLength];
+            // 옵션 데이터 복사
+            System.arraycopy(optionsAndPadding, 0, fullOptionsAndPadding, 0, totalOptionLength);
+            // 패딩은 기본 null
+
+            packetHeader.setOptions(Arrays.copyOf(fullOptionsAndPadding, totalOptionLength));
+            packetHeader.setPadding(Arrays.copyOfRange(fullOptionsAndPadding, totalOptionLength, fullOptionLength));
+
+            // IP 헤더 전체 추출 (ihl*4 바이트)
+            ipHeaderBytes = Arrays.copyOf(lowerPayload, ipHeaderLength);
         }
-        // Header에 필드 주입
-        chunk.setHeader(packetHeader); //PacketHeader
-        Byte[] bytes = new Byte[]{};
+
+        // packetHeader 주입
+        chunk.setHeader(packetHeader);
+
+        // IP 헤더 전체 바이트 배열 반환
+        return ipHeaderBytes;
     }
 
     // TODO: 아이피 확인 메서드 구현
