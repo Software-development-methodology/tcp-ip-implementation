@@ -37,12 +37,14 @@ public abstract class Layer<T extends Header> {
     /**
      * 하위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
+     * @deprecated
      */
     public abstract void receive(Chunk<Header> chunk);
 
     /**
      * 상위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
+     * @deprecated
      */
     public abstract void send(Chunk<Header> chunk);
 }
