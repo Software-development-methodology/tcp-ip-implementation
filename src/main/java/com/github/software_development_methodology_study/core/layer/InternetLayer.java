@@ -49,10 +49,11 @@ public class InternetLayer extends Layer<PacketHeader> {
     }
 
     /**
-     * 들어온 패킷을 모아두는 Map
-     * FragmentKey로 패킷 종류를 나누고, [Offset, Payload] 형태로 저장
+     * 들어온 패킷들을 저장하는 Map
+     * [FragmentKey, [Offset, Payload]] 형태로 저장
+     * Offset은 Map에서 꺼낼 때 편의를 위해 저장할 때 Integer로 저장
      */
-    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Byte, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
 
 
     @Override
