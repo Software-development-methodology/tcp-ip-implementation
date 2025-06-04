@@ -1,0 +1,80 @@
+package com.github.software_development_methodology_study.core.layer;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
+import com.github.software_development_methodology_study.core.layer.InternetLayer;
+
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class InternetLayerTest {
+
+    // 테스트 코드에서는 테스트에 필요한 특별한 조건을 만들기 위해서 필요한 클래스 말고는 정의 x
+    // 기존 코드를 테스트하고 싶은 것.
+
+    @Test
+    void sample() {
+
+    }
+    @Test
+    public void testFragmentReassembly() {
+        InternetLayer internetLayer = new InternetLayer();
+
+        PacketHeader header1 = makeHeader(0, true);   // offset = 0
+        PacketHeader header2 = makeHeader(1, true);   // offset = 1 → 8바이트
+        PacketHeader header3 = makeHeader(2, false);  // offset = 2 → 16바이트
+
+        Payload payload1 = new Payload(new Byte[]{1,2,3,4,5,6,7,8});
+        Payload payload2 = new Payload(new Byte[]{9,10,11,12,13,14,15,16});
+        Payload payload3 = new Payload(new Byte[]{17,18,19,20,21,22,23,24});
+
+        InternetLayer.FragmentKey key = internetLayer.getFragmentKey(header1); // 테스트를 하기 좋은 구조로 클래스를 설계해야한다.
+        // 위 코드는 지금 세팅하는게 애매하게 되고 있음. DI확실하게 해주는 코드로
+
+        internetLayer.storeFragment(key, header1, payload1);
+        internetLayer.storeFragment(key, header2, payload2);
+        internetLayer.storeFragment(key, header3, payload3);
+
+        assertTrue(internetLayer.isLastFragment(header3.getFlags(), header3.getFragment_Offset()));
+
+        Byte[] result = internetLayer.mergeFragments(key, 3);
+
+        Byte[] expected = new Byte[]{
+                1,2,3,4,5,6,7,8,
+                9,10,11,12,13,14,15,16,
+                17,18,19,20,21,22,23,24
+        };
+
+        assertArrayEquals(expected, result);
+        System.out.println("Merged Result: " + Arrays.toString(result));
+        internetLayer.fragmentBuffer.remove(key);
+        assertFalse(internetLayer.fragmentBuffer.containsKey(key));
+    }
+
+    private PacketHeader makeHeader(int offsetBlockIndex, boolean moreFragment) {
+        PacketHeader header = new PacketHeader();
+
+        int flags = moreFragment ? 0b001 : 0b000;
+
+        // ✅ 복원: block 단위 → byte 단위로 변환
+        int offsetField = offsetBlockIndex << 3;
+
+        int flagsAndOffset = (flags << 13) | offsetField;
+
+        Byte high = (byte) (flagsAndOffset >> 8);
+        Byte low = (byte) (flagsAndOffset & 0xFF);
+
+        header.setFragment_Offset(new Byte[]{high, low});
+        header.setFlags(new Byte[]{(byte) (flags << 5)});
+
+        header.setSource_Address(new Byte[]{(byte)192, (byte)168, 1, 1});
+        header.setDestination_Address(new Byte[]{(byte)192, (byte)168, 1, 2});
+        header.setProtocol(new Byte[]{(byte)6});
+        header.setIdentification(new Byte[]{0x12, 0x34});
+
+        return header;
+    }
+}
