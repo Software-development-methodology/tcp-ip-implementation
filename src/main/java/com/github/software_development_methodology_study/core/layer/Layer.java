@@ -40,12 +40,12 @@ public abstract class Layer<T extends Header> {
      * @param chunk
      * @param nic
      */
-    public abstract void receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic);
+    public abstract boolean receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic);
 
     /**
      * 상위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
      * @param nic
      */
-    public abstract void send(Chunk<Header> chunk, PcapNetworkInterface nic);
+    public abstract boolean send(Chunk<Header> chunk, PcapNetworkInterface nic);
 }

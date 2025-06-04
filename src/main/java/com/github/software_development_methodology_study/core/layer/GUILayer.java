@@ -135,15 +135,16 @@ public class GUILayer extends Layer<EmptyHeader> {
     }
 
     @Override
-    public void receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic) {
+    public boolean receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic) {
         String message = ByteArrayToString(chunk.getPayload().getBytes());
         generateChatLogMessage(message, ChatLogMode.RECEIVE);
+        return true;
     }
 
     @Override
-    public void send(Chunk<Header> chunk, PcapNetworkInterface nic) {
+    public boolean send(Chunk<Header> chunk, PcapNetworkInterface nic) {
         System.out.println(Arrays.toString(chunk.getPayload().getBytes()));
-        this.lowerLayer.send(chunk, nic);
+        return this.lowerLayer.send(chunk, nic);
     }
 
 
