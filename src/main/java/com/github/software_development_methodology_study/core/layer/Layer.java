@@ -3,6 +3,7 @@ package com.github.software_development_methodology_study.core.layer;
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+import org.pcap4j.core.PcapNetworkInterface;
 
 /**
  * Layer 추상 클래스입니다.
@@ -41,10 +42,14 @@ public abstract class Layer<T extends Header> {
      */
     public abstract void receive(Chunk<Header> chunk);
 
+    public abstract void receive(Chunk<Header> chunk, PcapNetworkInterface nic);
+
     /**
      * 상위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
      * @deprecated
      */
     public abstract void send(Chunk<Header> chunk);
+
+    public abstract void send(Chunk<Header> chunk, PcapNetworkInterface nic);
 }
