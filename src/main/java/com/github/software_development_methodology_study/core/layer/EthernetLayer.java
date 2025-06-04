@@ -1,23 +1,28 @@
 package com.github.software_development_methodology_study.core.layer;
 
 import com.github.software_development_methodology_study.core.data.chunk.Chunk;
+import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.FrameHeader;
+import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+import org.pcap4j.core.PcapNetworkInterface;
 
 import static com.github.software_development_methodology_study.common.util.TypeConverter.StringToByteArray;
 
 public class EthernetLayer extends Layer<FrameHeader> {
     @Override
-    public void receive(Chunk chunk) {
+    public boolean receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic) {
         checkValidFrameSize(chunk);
         // @TODO:: FrameHeader 검증 및 제거
         checkValidFrameHeaderLessSize(chunk);
+        return this.upperLayer.receive(chunk, nic);
     }
 
     @Override
-    public void send(Chunk chunk) {
+    public boolean send(Chunk<Header> chunk, PcapNetworkInterface nic) {
         validateIncomingPayloadSize(chunk.getPayload());
-
+        // @TODO:: do something
+        return this.lowerLayer.send(chunk, nic);
     }
 
     private Byte[] addMacAddress(Byte[] macAddress) {
