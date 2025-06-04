@@ -38,18 +38,14 @@ public abstract class Layer<T extends Header> {
     /**
      * 하위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
-     * @deprecated
+     * @param nic
      */
-    public abstract void receive(Chunk<Header> chunk);
-
     public abstract void receive(Chunk<Header> chunk, PcapNetworkInterface nic);
 
     /**
      * 상위 레이어에서 Chunk를 전달받아 처리하는 메서드
      * @param chunk
-     * @deprecated
+     * @param nic
      */
-    public abstract void send(Chunk<Header> chunk);
-
     public abstract void send(Chunk<Header> chunk, PcapNetworkInterface nic);
 }
