@@ -5,10 +5,7 @@ import com.github.software_development_methodology_study.core.data.chunk.header.
 import com.github.software_development_methodology_study.core.data.chunk.header.PacketHeader;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
@@ -59,45 +56,43 @@ public class InternetLayer extends Layer<PacketHeader> {
     @Override
     public void receive(Chunk<Header> chunk) {
         if(chunk.getPayload() == null)
-            throw new NullPointerException("Chunk is null");
+            throw new IllegalArgumentException("Payload가 비어있습니다.");
 
         PacketHeader packetHeader = new PacketHeader();
-//        chunk.setHeader(packetHeader);
 
+        // MEETING: 더 좋은 방법이 있는지 -> 지금 방법이 좋은지
         extractChunkAndSetNewHeader(chunk, packetHeader);
 
-        // TODO: isLocalIPAddress 매개변수 수정
-        // 아이피 주소 확인
-        if(!isLocalIPAddress(null))
+        // FIXME: Github Discussion 참고
+        // 목적지 아이피 주소 확인
+
+        if(!isLocalIPAddress(packetHeader.getDestination_Address()))
             return;
+        //        프로토콜 별 처리
+        //        -> tcp는 마지막 프래그먼트면 바로 합치고 올릴 수 있음<신뢰성>
+        //        -> UDP는 비신뢰성이라 다 오는 것 확인해야함
+        //        근데 굳이 나눠야 하나? UDP 안할 것 같은디
+        //        Protocol protocol = getProtocol(null);
 
-//        프로토콜 별 처리
-//        -> tcp는 마지막 프래그먼트면 바로 합치고 올릴 수 있음<신뢰성>
-//        -> UDP는 비신뢰성이라 다 오는 것 확인해야함
-//        근데 굳이 나눠야 하나? UDP 안할 것 같은디
-//        Protocol protocol = getProtocol(null);
+        FragmentKey key = getFragmentKey(packetHeader);
+        storeFragment(key, packetHeader, chunk.getPayload());
 
-        // TODO: fragmentBuffer에 헤더 넣기..
-
-        // TODO: isLastFragment 매개변수 수정,
-        //  getFragmentKey 메서드 작성,
-        //  mergeFragments 매개변수 수정
-        if(isLastFragment(null)) {
-//            FragmentKey fragmentKey = getFragmentKey();
-            Byte[] mergedFragment = mergeFragments(null, fragmentBuffer.get(null).size());
+        if(isLastFragment(packetHeader.getFlags())) {
+            Byte[] mergedFragment = mergeFragments(key);
             chunk.setPayload(new Payload(mergedFragment));
+            fragmentBuffer.remove(key);
             upperLayer.receive(chunk);
         }
     }
 
+    //TODO: send():refactoring 이후 진행할 것.
     @Override
-    public void send(Chunk<Header> chunk) {
-        PacketHeader ipHeader = new PacketHeader();
-        // 헤더 설정
-        chunk.setHeader(ipHeader);
-        lowerLayer.send(chunk);
-
-    }
+   public void send(Chunk<Header> chunk) {
+//        PacketHeader ipHeader = new PacketHeader();
+//        // 헤더 설정
+//        chunk.setHeader(ipHeader);
+//        lowerLayer.send(chunk);
+  }
 
     /**
      * Ethernet Layer에서 받은 청크의 페이로드에서 IP 헤더 정보를 파싱하여
@@ -227,29 +222,62 @@ public class InternetLayer extends Layer<PacketHeader> {
         return true;
     }
 
-//    tcp, udp 확인용 / 추후 udp 확장 가능성 고려
-//    private Protocol getProtocol(Byte[] protocol) {}
+    private boolean isLastFragment(Byte[] flags) {
+        return (flags[0] & 0x1) == 0;
+    }
 
-    // TODO: 마지막 프래그먼트 확인 메서드 구현
-    private boolean isLastFragment(Byte[] MF) {
-        // More Fragments
-        return true;
+    /**
+     * fragment를 fragmentBuffer에 저장하는 메서드 <br>
+     * 기존에 fragmentKey가 있는지 확인 후 없으면 생성 <br>
+     * InternetLayer의 Header로 fragmentKey를 생성한다. <br>
+     * @param key key
+     * @param header 패킷의 Header
+     * @param payload InternetLayer 페이로드
+     */
+    private void storeFragment(FragmentKey key, PacketHeader header, Payload payload) {
+        int rawOffset = (Byte.toUnsignedInt(header.getFragment_Offset()[0]) << 8)
+                | Byte.toUnsignedInt(header.getFragment_Offset()[1]);
+        int offset = rawOffset & 0x1FFF;
+
+        fragmentBuffer.putIfAbsent(key, new ConcurrentHashMap<>());
+        fragmentBuffer.get(key).put(offset, payload.getBytes());
+    }
+
+    /**
+     * 패킷을 구별하기 위한 key <br>
+     * srcIp, dstIp, protocol, identification 4가지를 가지고 key를 만듬
+     * @param packetHeader 현재 레이어의 Header
+     * @return key
+     * @author Seungmin-shin
+     */
+    private FragmentKey getFragmentKey(PacketHeader packetHeader) {
+        return new FragmentKey(
+                packetHeader.getSource_Address(),
+                packetHeader.getDestination_Address(),
+                packetHeader.getProtocol(),
+                packetHeader.getIdentification());
     }
 
     /**
      * 프래그먼트 합치는 메서드
-     * @param fragmentKey 패킷 식별키
-     * @param fragmentCnt 식별된 패킷들 개수
+     * @param key 패킷 식별키
      * @return 식별된 패킷들을 합친 패킷(세그먼트)
-     * @author SeungminShin97
+     * @author Hoyeong-jeong
      */
-    private Byte[] mergeFragments(FragmentKey fragmentKey, int fragmentCnt) {
-        Map<Byte, Byte[]> fragmentMap = fragmentBuffer.get(fragmentKey);
-        ArrayList<Byte> fragmentList = new ArrayList<>(fragmentMap.size());
+    private Byte[] mergeFragments(FragmentKey key) {
+        Map<Integer, Byte[]> fragmentMap = fragmentBuffer.get(key);
+        if (fragmentMap == null || fragmentMap.isEmpty())
+            throw new IllegalStateException("병합할 조각이 없습니다.");
 
-        for(int i = 0; i < fragmentCnt; ++i)
-            fragmentList.addAll(Arrays.asList(fragmentMap.get(i)));
+        List<Integer> offsets = new ArrayList<>(fragmentMap.keySet());
+        Collections.sort(offsets);
 
-        return fragmentList.toArray(new Byte[0]);
+        List<Byte> merged = new ArrayList<>();
+        for (int offset : offsets) {
+            Byte[] piece = fragmentMap.get(offset);
+            if (piece != null) merged.addAll(Arrays.asList(piece));
+        }
+
+        return merged.toArray(new Byte[0]);
     }
 }
