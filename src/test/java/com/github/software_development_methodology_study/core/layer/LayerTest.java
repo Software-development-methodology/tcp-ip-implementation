@@ -16,7 +16,7 @@ class LayerTest {
 
         //Layer<?> layer = new TestLayer();
         TestLayer testLayer = new TestLayer();
-        testLayer.receive(chunk);
+        testLayer.receive(chunk, null);
 
         assertAll(
                 () -> assertTrue(testLayer.receivedHeader instanceof EmptyHeader),
@@ -33,7 +33,7 @@ class LayerTest {
         TestLayer2 testLayer2 = new TestLayer2();
         testLayer2.setUpperLayer(testLayer);
 
-        testLayer2.receive(chunk);
+        testLayer2.receive(chunk, null);
 
         assertAll(
                 () -> assertTrue(testLayer.receivedHeader instanceof EmptyHeader),
