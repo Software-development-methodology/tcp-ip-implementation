@@ -61,9 +61,9 @@ public class InternetLayer extends Layer<PacketHeader> {
         //  getFragmentKey 메서드 작성,
         //  mergeFragments 매개변수 수정
         
-        storeFragment(key, header, chunk.getPayload());
         FragmentKey key = getFragmentKey(header);
-        
+        storeFragment(key, header, chunk.getPayload());
+
         if (isLastFragment(header.getFlags(), header.getFragment_Offset())) {
             Byte[] merged = mergeFragments(key, fragmentBuffer.get(key).size());
             chunk.setPayload(new Payload(merged));
