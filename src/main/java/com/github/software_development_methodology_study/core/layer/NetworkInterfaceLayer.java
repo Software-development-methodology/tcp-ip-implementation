@@ -64,7 +64,7 @@ public class NetworkInterfaceLayer {
                 if (packet != null) {
                     byte[] rawData = packet.getRawData();
                     System.out.println(Arrays.toString(rawData));
-//                    upperLayer.receive(rawData);  // 상위 계층으로 전달
+                    // @TODO:: upperLayer.receive(rawData, nic);  // 상위 계층으로 전달
                 }
             }
         } catch (PcapNativeException | NotOpenException | TimeoutException | EOFException e) {

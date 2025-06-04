@@ -4,6 +4,7 @@ import com.github.software_development_methodology_study.core.data.chunk.Chunk;
 import com.github.software_development_methodology_study.core.data.chunk.header.EmptyHeader;
 import com.github.software_development_methodology_study.core.data.chunk.header.Header;
 import com.github.software_development_methodology_study.core.data.chunk.payload.Payload;
+import org.pcap4j.core.PcapNetworkInterface;
 
 import java.util.Arrays;
 import javax.swing.*;
@@ -110,6 +111,8 @@ public class GUILayer extends Layer<EmptyHeader> {
         chunk.setHeader(new EmptyHeader());
         chunk.setPayload(new Payload(StringToByteArray(rawMessage)));
 
+        //@TODO:: send(chunk, nic);
+
         inputField.setText("");
     }
 
@@ -132,15 +135,16 @@ public class GUILayer extends Layer<EmptyHeader> {
     }
 
     @Override
-    public void receive(Chunk<Header> chunk) {
+    public boolean receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic) {
         String message = ByteArrayToString(chunk.getPayload().getBytes());
         generateChatLogMessage(message, ChatLogMode.RECEIVE);
+        return true;
     }
 
     @Override
-    public void send(Chunk<Header> chunk) {
+    public boolean send(Chunk<Header> chunk, PcapNetworkInterface nic) {
         System.out.println(Arrays.toString(chunk.getPayload().getBytes()));
-        this.lowerLayer.send(chunk);
+        return this.lowerLayer.send(chunk, nic);
     }
 
 
