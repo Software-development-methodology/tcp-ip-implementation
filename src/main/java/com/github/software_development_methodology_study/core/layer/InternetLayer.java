@@ -8,27 +8,43 @@ import com.github.software_development_methodology_study.core.data.chunk.payload
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 public class InternetLayer extends Layer<PacketHeader> {
 
     /**
-     * 패킷 식별용 클래스 <br>
-     * 패킷은 srcIp, dstIp, protocol, identification으로 식별한다.
-     * @author SeungminShin97
+     * 패킷 구분용 클래스 <br>
+     * 패킷은 srcIp, dstIp, protocol, identification 4가지 필드로 구분한다. <br>
+     * 필드들은 Byte[] 로 저장 <br>
+     * fragmentBuffer에 [FragmentKey, [Offset, Payload]] 형태로 저장
      */
-    private class FragmentKey {
-        private final String srcIp;
-        private final String dstIp;
-        private final int protocol;
-        private final int identification;
+    private record FragmentKey(
+            Byte[] srcIp,
+            Byte[] dstIp,
+            Byte[] protocol,
+            Byte[] identification
+    ) {
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || this.getClass() != obj.getClass()) return false;
+            FragmentKey key = (FragmentKey) obj;
+            return (Arrays.equals(this.srcIp, key.srcIp)
+                    && Arrays.equals(this.dstIp, key.dstIp)
+                    && Arrays.equals(this.protocol, key.protocol)
+                    && Arrays.equals(this.identification, key.identification));
+        }
 
-        public FragmentKey(String srcIp, String dstIp, int protocol, int identification) {
-            this.srcIp = srcIp;
-            this.dstIp = dstIp;
-            this.protocol = protocol;
-            this.identification = identification;
+        @Override
+        public int hashCode() {
+            return Objects.hash(
+                    Arrays.hashCode(srcIp),
+                    Arrays.hashCode(dstIp),
+                    Arrays.hashCode(protocol),
+                    Arrays.hashCode(identification)
+            );
         }
     }
 
