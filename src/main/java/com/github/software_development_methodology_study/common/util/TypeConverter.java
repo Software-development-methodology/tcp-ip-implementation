@@ -7,26 +7,28 @@ public final class TypeConverter {
     private TypeConverter(){}
 
     public static Byte[] StringToByteArray(String str) {
-        byte[] byteArray = str.getBytes(StandardCharsets.UTF_8); // or Charset.forName("UTF-8")
-        Byte[] byteObjectArray = new Byte[byteArray.length];
-
-        for (int i = 0; i < byteArray.length; i++) {
-            byteObjectArray[i] = byteArray[i]; // auto-boxing
-        }
-        return byteObjectArray;
+        return toObject(str.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String ByteArrayToString(Byte[] bytes) throws IllegalArgumentException {
         if (Objects.isNull(bytes)) throw new IllegalArgumentException("Input Byte array cannot be null");
 
-        byte[] primitiveBytes = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] == null) {
-                throw new IllegalArgumentException("Byte array contains null at index " + i);
-            }
-            primitiveBytes[i] = bytes[i];
-        }
+        return new String(toPrimitive(bytes), StandardCharsets.UTF_8);
+    }
 
-        return new String(primitiveBytes, StandardCharsets.UTF_8);
+    public static Byte[] toObject(byte[] bytes) {
+        Byte[] result = new Byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            result[i] = bytes[i];
+        }
+        return result;
+    }
+
+    public static byte[] toPrimitive(Byte[] bytes) {
+        byte[] result = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            result[i] = bytes[i]; // null이면 NPE 발생 가능
+        }
+        return result;
     }
 }
