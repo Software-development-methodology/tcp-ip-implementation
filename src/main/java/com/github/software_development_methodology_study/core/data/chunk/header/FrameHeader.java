@@ -59,30 +59,4 @@ public class FrameHeader extends Header{
     public static FrameHeaderBuilder builder() {
         return new FrameHeaderBuilder();
     }
-
-    private enum HeaderField{
-        DESTINATION_MAC(0, 6),
-        SRC_MAC(6, 6),
-        TYPE(12, 2);
-
-        private final int startIndex;
-        private final int length;
-
-        HeaderField(int startIndex, int length) {
-            this.startIndex = startIndex;
-            this.length = length;
-        }
-
-        public int getStartIndex(int totalLength) {
-            return startIndex >= 0 ? startIndex : (totalLength + startIndex);
-        }
-
-        public int getEndIndex() {
-            return (startIndex + length) -1;
-        }
-
-        public int getLength() {
-            return length;
-        }
-    }
 }
