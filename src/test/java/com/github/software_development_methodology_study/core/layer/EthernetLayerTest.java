@@ -96,17 +96,27 @@ class EthernetLayerTest {
         assertFalse(()-> ethernetLayer.receive(chunk, null));
     }
 
-    /**
-     * Header 제거하는 로직 작성 후 테스트 활성화 할 것 `@can019`
-     */
-    @Disabled
-    void receive_호출_시_주어진_Chunk_크기가_정확히_1514byte면_illigalArgumentException이_발생하지_않는다() {
+    @Test
+    void receive_호출_시_주어진_Chunk_크기가_정확히_1514byte면_정상수행되어야한다() {
+        Byte[] bytes = new Byte[1514];
+        Byte[] randomDstMac = generateRandomMacAddress();
+        Byte[] frameHeader = generateFrameHeader(randomDstMac, generateRandomMacAddress(), generateRandomType());
+
+        System.arraycopy(frameHeader, 0, bytes, 0, frameHeader.length);
+
         Chunk<EmptyHeader> chunk = new Chunk<>();
         chunk.setHeader(new EmptyHeader());
-        Byte[] bytes = new Byte[1514]; // 경계값
         chunk.setPayload(new Payload(bytes));
 
-        assertDoesNotThrow(()-> ethernetLayer.receive(chunk, null));
+        when(mockAddress.getAddress())
+                .thenReturn(toPrimitive(randomDstMac));
+
+        when(nic.getLinkLayerAddresses())
+                .thenReturn(new ArrayList<>(List.of(mockAddress)));
+
+        when(mockUpperLayer.receive(any(), any())).thenReturn(true);
+
+        assertTrue(()-> ethernetLayer.receive(chunk, nic));
     }
 
     @Test
