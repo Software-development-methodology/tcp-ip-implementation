@@ -53,7 +53,7 @@ class EthernetLayerTest {
     }
 
     @Test
-    void receive_호출_시_Chunk_크기가_60byte를_미만이면_false를_리턴해야한다() {
+    void receive_호출_시_주저인_Chunk_크기가_60byte를_미만이면_false를_리턴해야한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
         chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[57];
@@ -63,7 +63,7 @@ class EthernetLayerTest {
     }
 
     @Test
-    void receive_호출_시_Chunk_크기가_정확히_60byte면_정상수행되어야한다() {
+    void receive_호출_시_주어진_Chunk_크기가_정확히_60byte면_정상수행되어야한다() {
         Byte[] bytes = new Byte[60];
         Byte[] randomDstMac = generateRandomMacAddress();
         Byte[] frameHeader = generateFrameHeader(randomDstMac, generateRandomMacAddress(), generateRandomType());
@@ -87,7 +87,7 @@ class EthernetLayerTest {
 
 
     @Test
-    void receive_호출_시_Chunk_크기가_1514byte_초과하면_false가_리턴되어야한다() {
+    void receive_호출_시_주어진_Chunk_크기가_1514byte_초과하면_false가_리턴되어야한다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
         chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1518];
@@ -100,7 +100,7 @@ class EthernetLayerTest {
      * Header 제거하는 로직 작성 후 테스트 활성화 할 것 `@can019`
      */
     @Disabled
-    void receive_호출_시_Chunk_크기가_정확히_1514byte면_illigalArgumentException이_발생하지_않는다() {
+    void receive_호출_시_주어진_Chunk_크기가_정확히_1514byte면_illigalArgumentException이_발생하지_않는다() {
         Chunk<EmptyHeader> chunk = new Chunk<>();
         chunk.setHeader(new EmptyHeader());
         Byte[] bytes = new Byte[1514]; // 경계값
