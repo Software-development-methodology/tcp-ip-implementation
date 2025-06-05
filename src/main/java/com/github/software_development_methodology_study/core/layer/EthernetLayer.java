@@ -25,7 +25,7 @@ public class EthernetLayer extends Layer<FrameHeader> {
         FrameHeader frameHeader = extractHeader(chunk.getPayload());
 
         // 목적지 주소랑 호스트 주소 비교
-        if (Arrays.equals(frameHeader.getDestinationMac(), toObject(nic.getLinkLayerAddresses().get(0).getAddress()))) {
+        if (!Arrays.equals(frameHeader.getDestinationMac(), toObject(nic.getLinkLayerAddresses().get(0).getAddress()))) {
             return false;
         }
 
