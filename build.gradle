@@ -21,6 +21,11 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.18")
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna
     implementation("net.java.dev.jna:jna:5.17.0")
+
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
 test {
