@@ -135,7 +135,7 @@ public class GUILayer extends Layer<EmptyHeader> {
     }
 
     @Override
-    public boolean receive(Chunk<EmptyHeader> chunk, PcapNetworkInterface nic) {
+    public boolean receive(Chunk<Header> chunk, PcapNetworkInterface nic) {
         String message = ByteArrayToString(chunk.getPayload().getBytes());
         generateChatLogMessage(message, ChatLogMode.RECEIVE);
         return true;
