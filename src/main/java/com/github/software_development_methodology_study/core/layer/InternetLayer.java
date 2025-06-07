@@ -51,9 +51,10 @@ public class InternetLayer extends Layer<PacketHeader> {
      */
     private final ConcurrentHashMap<FragmentKey, ConcurrentHashMap<Integer, Byte[]>> fragmentBuffer = new ConcurrentHashMap<>();
 
+    // FIXME : receive 메서드 return 값 boolean 으로 변경
 
     @Override
-    public void receive(Chunk<Header> chunk) {
+    public boolean receive(Chunk<Header> chunk) {
         if(chunk.getPayload() == null)
             throw new IllegalArgumentException("Payload가 비어있습니다.");
 
@@ -66,7 +67,7 @@ public class InternetLayer extends Layer<PacketHeader> {
         // 목적지 아이피 주소 확인
 
         if(!isLocalIPAddress(packetHeader.getDestination_Address()))
-            return;
+            return true;
         //        프로토콜 별 처리
         //        -> tcp는 마지막 프래그먼트면 바로 합치고 올릴 수 있음<신뢰성>
         //        -> UDP는 비신뢰성이라 다 오는 것 확인해야함
@@ -86,17 +87,18 @@ public class InternetLayer extends Layer<PacketHeader> {
 
     //TODO: send():refactoring 이후 진행할 것.
     @Override
-   public void send(Chunk<Header> chunk) {
+    public void send(Chunk<Header> chunk) {
     //        PacketHeader ipHeader = new PacketHeader();
     //        // 헤더 설정
     //        chunk.setHeader(ipHeader);
     //        lowerLayer.send(chunk);s
   }
 
-    /** extractChunkAndSetNewHeader() 리팩토링 진행
-     * processBasicHeader: 기존 헤더만 받아오는 메서드
-     * processHeaderWithOptions: 헤더와 옵션을 둘 다 받아오는 메서드
-     * getIpFromPayload: IP 헤더 파싱 전용 유틸리티 메서드
+    /**
+     * 헤더만 or 헤더 + 패딩 받아오는 메서드
+     * @param chunk
+     * @param packetHeader
+     * @return
      */
     private Byte[] extractChunkAndSetNewHeader(Chunk<Header> chunk, PacketHeader packetHeader) {
         Byte[] lowerPayload = chunk.getPayload().getBytes();
@@ -121,9 +123,11 @@ public class InternetLayer extends Layer<PacketHeader> {
         return ipHeaderBytes;
     }
 
-    /**메서드 역할 분리
-     * processBasicHeader
-     * 기존 헤더만 받아오는 메서드
+    /**
+     * 헤더만 받아오는 메서드
+     * @param lowerPayload
+     * @param packetHeader
+     * @param chunk
      */
     private void processBasicHeader(Byte[] lowerPayload, PacketHeader packetHeader, Chunk<Header> chunk) {
         int versionAndIHL = Byte.toUnsignedInt(lowerPayload[0]);
@@ -154,11 +158,13 @@ public class InternetLayer extends Layer<PacketHeader> {
 
         chunk.setHeader(packetHeader);
     }
+
     /**
-     * processHeaderWithOptions
      * 헤더와 옵션을 둘 다 받아오는 메서드
-     * 네트워크에서 받은 패킷 데이터 byte[]로 주고받음.
-     * Byte[] 경우 메모리 낭비 + 불필요한 오토박싱이 발생합니다.
+     * @param lowerPayload
+     * @param ihl
+     * @param packetHeader
+     * @param chunk
      */
     private void processHeaderWithOptions(Byte[] lowerPayload, int ihl, PacketHeader packetHeader, Chunk<Header> chunk) {
         processBasicHeader(lowerPayload, packetHeader,chunk); // 먼저 공통 헤더 처리 (packetHeader에 주입)
@@ -206,9 +212,10 @@ public class InternetLayer extends Layer<PacketHeader> {
     }
 
     /**
-     * getIpFromPayload
-     * IP 헤더 파싱 전용 유틸리티 메서드
-     * Source + Destination IP 주소에 사용
+     * IP 헤더 파싱 전용 유틸리티 메서드 (Source + Destination IP 주소에 사용) <br>
+     * @param payload
+     * @param startIndex
+     * @return
      */
     private int getIpFromPayload(Byte[] payload, int startIndex) {
         return (Byte.toUnsignedInt(payload[startIndex]) << 24) |
