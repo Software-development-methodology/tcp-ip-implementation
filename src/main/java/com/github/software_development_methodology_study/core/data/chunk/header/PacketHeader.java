@@ -2,10 +2,7 @@ package com.github.software_development_methodology_study.core.data.chunk.header
 
 import com.github.software_development_methodology_study.core.data.contract.FixedSize;
 
-/**
- * IP 헤더를 나타내는 클래스입니다.
- * IPv4 헤더의 구조에 따라 필드를 정의하고 접근하는 메서드를 제공합니다.
- */
+
 public class PacketHeader extends Header implements FixedSize {
     private final Byte[] versionAndIHL;      // 버전(4비트) + 헤더 길이(4비트)
     private final Byte[] tos;                // 서비스 유형(Type of Service)
