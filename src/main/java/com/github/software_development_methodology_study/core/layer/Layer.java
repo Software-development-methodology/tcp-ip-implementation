@@ -48,9 +48,4 @@ public abstract class Layer<T extends Header> {
      * @param nic
      */
     public abstract boolean send(Chunk<Header> chunk, PcapNetworkInterface nic);
-
-    public abstract boolean receive(Chunk<Header> chunk);
-
-    //TODO: send():refactoring 이후 진행할 것.
-    public abstract void send(Chunk<Header> chunk);
 }

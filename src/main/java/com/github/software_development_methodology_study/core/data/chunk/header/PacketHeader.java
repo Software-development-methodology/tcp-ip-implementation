@@ -1,130 +1,185 @@
 package com.github.software_development_methodology_study.core.data.chunk.header;
 
-public class PacketHeader extends Header{
-    private Byte[] Version;
-    private Byte[] IHL;
-    private Byte[] Type_of_Service;
-    private Byte[] Total_Length;
-    private Byte[] Identification;
-    private Byte[] Flags;
-    private Byte[] Fragment_Offset;
-    private Byte[] TTL;                 // Time_To_Live
-    private Byte[] Protocol;
-    private Byte[] Header_Checksum;
-    private Byte[] Source_Address;
-    private Byte[] Destination_Address;
-    private Byte[] Options;
-    private Byte[] Padding;
+import com.github.software_development_methodology_study.core.data.contract.FixedSize;
 
-    public Byte[] getVersion() {
-        return Version;
+/**
+ * IP 헤더를 나타내는 클래스입니다.
+ * IPv4 헤더의 구조에 따라 필드를 정의하고 접근하는 메서드를 제공합니다.
+ */
+public class PacketHeader extends Header implements FixedSize {
+    private final Byte[] versionAndIHL;      // 버전(4비트) + 헤더 길이(4비트)
+    private final Byte[] tos;                // 서비스 유형(Type of Service)
+    private final Byte[] totalLength;        // 전체 패킷 길이
+    private final Byte[] identification;     // 식별자
+    private final Byte[] flagsAndOffset;     // 플래그(3비트) + 단편화 오프셋(13비트)
+    private final Byte[] ttl;                // 생존 시간(Time To Live)
+    private final Byte[] protocol;           // 상위 계층 프로토콜
+    private final Byte[] headerChecksum;     // 헤더 체크섬
+    private final Byte[] sourceIP;           // 출발지 IP 주소
+    private final Byte[] destinationIP;      // 목적지 IP 주소
+    private final Byte[] options;            // 옵션 (가변 길이)
+    private final Byte[] padding;            // 패딩 (가변 길이)
+
+    public PacketHeader(Byte[] rawHeader, Byte[] versionAndIHL, Byte[] tos, Byte[] totalLength,
+                        Byte[] identification, Byte[] flagsAndOffset, Byte[] ttl, Byte[] protocol,
+                        Byte[] headerChecksum, Byte[] sourceIP, Byte[] destinationIP,
+                        Byte[] options, Byte[] padding) {
+        super(rawHeader);
+        this.versionAndIHL = versionAndIHL;
+        this.tos = tos;
+        this.totalLength = totalLength;
+        this.identification = identification;
+        this.flagsAndOffset = flagsAndOffset;
+        this.ttl = ttl;
+        this.protocol = protocol;
+        this.headerChecksum = headerChecksum;
+        this.sourceIP = sourceIP;
+        this.destinationIP = destinationIP;
+        this.options = options;
+        this.padding = padding;
     }
 
-    public void setVersion(Byte[] version) {
-        Version = version;
+    @Override
+    public int expectedLength() {
+        return 20; // 기본 IPv4 헤더 길이는 20바이트 (옵션 필드 제외)
     }
 
-    public Byte[] getIHL() {
-        return IHL;
+    public Byte[] getVersionAndIHL() {
+        return versionAndIHL;
     }
 
-    public void setIHL(Byte[] IHL) {
-        this.IHL = IHL;
+    public Byte[] getTos() {
+        return tos;
     }
 
-    public Byte[] getType_of_Service() {
-        return Type_of_Service;
-    }
-
-    public void setType_of_Service(Byte[] type_of_Service) {
-        Type_of_Service = type_of_Service;
-    }
-
-    public Byte[] getTotal_Length() {
-        return Total_Length;
-    }
-
-    public void setTotal_Length(Byte[] total_Length) {
-        Total_Length = total_Length;
+    public Byte[] getTotalLength() {
+        return totalLength;
     }
 
     public Byte[] getIdentification() {
-        return Identification;
+        return identification;
     }
 
-    public void setIdentification(Byte[] identification) {
-        Identification = identification;
+    public Byte[] getFlagsAndOffset() {
+        return flagsAndOffset;
     }
 
-    public Byte[] getFlags() {
-        return Flags;
-    }
-
-    public void setFlags(Byte[] flags) {
-        Flags = flags;
-    }
-
-    public Byte[] getFragment_Offset() {
-        return Fragment_Offset;
-    }
-
-    public void setFragment_Offset(Byte[] fragment_Offset) {
-        Fragment_Offset = fragment_Offset;
-    }
-
-    public Byte[] getTTL() {
-        return TTL;
-    }
-
-    public void setTTL(Byte[] TTL) {
-        this.TTL = TTL;
+    public Byte[] getTtl() {
+        return ttl;
     }
 
     public Byte[] getProtocol() {
-        return Protocol;
+        return protocol;
     }
 
-    public void setProtocol(Byte[] protocol) {
-        Protocol = protocol;
+    public Byte[] getHeaderChecksum() {
+        return headerChecksum;
     }
 
-    public Byte[] getHeader_Checksum() {
-        return Header_Checksum;
+    public Byte[] getSourceIP() {
+        return sourceIP;
     }
 
-    public void setHeader_Checksum(Byte[] header_Checksum) {
-        Header_Checksum = header_Checksum;
-    }
-
-    public Byte[] getSource_Address() {
-        return Source_Address;
-    }
-
-    public void setSource_Address(Byte[] source_Address) {
-        Source_Address = source_Address;
-    }
-
-    public Byte[] getDestination_Address() {
-        return Destination_Address;
-    }
-
-    public void setDestination_Address(Byte[] destination_Address) {
-        Destination_Address = destination_Address;
+    public Byte[] getDestinationIP() {
+        return destinationIP;
     }
 
     public Byte[] getOptions() {
-        return Options;
-    }
-
-    public void setOptions(Byte[] options) {
-        Options = options;
+        return options;
     }
 
     public Byte[] getPadding() {
-        return Padding;
+        return padding;
     }
 
-    public void setPadding(Byte[] padding) {
-        Padding = padding;
+    public static class PacketHeaderBuilder {
+        private Byte[] rawHeader;
+        private Byte[] versionAndIHL;
+        private Byte[] tos;
+        private Byte[] totalLength;
+        private Byte[] identification;
+        private Byte[] flagsAndOffset;
+        private Byte[] ttl;
+        private Byte[] protocol;
+        private Byte[] headerChecksum;
+        private Byte[] sourceIP;
+        private Byte[] destinationIP;
+        private Byte[] options;
+        private Byte[] padding;
+
+        public PacketHeaderBuilder rawHeader(Byte[] rawHeader) {
+            this.rawHeader = rawHeader;
+            return this;
+        }
+
+        public PacketHeaderBuilder versionAndIHL(Byte[] versionAndIHL) {
+            this.versionAndIHL = versionAndIHL;
+            return this;
+        }
+
+        public PacketHeaderBuilder tos(Byte[] tos) {
+            this.tos = tos;
+            return this;
+        }
+
+        public PacketHeaderBuilder totalLength(Byte[] totalLength) {
+            this.totalLength = totalLength;
+            return this;
+        }
+
+        public PacketHeaderBuilder identification(Byte[] identification) {
+            this.identification = identification;
+            return this;
+        }
+
+        public PacketHeaderBuilder flagsAndOffset(Byte[] flagsAndOffset) {
+            this.flagsAndOffset = flagsAndOffset;
+            return this;
+        }
+
+        public PacketHeaderBuilder ttl(Byte[] ttl) {
+            this.ttl = ttl;
+            return this;
+        }
+
+        public PacketHeaderBuilder protocol(Byte[] protocol) {
+            this.protocol = protocol;
+            return this;
+        }
+
+        public PacketHeaderBuilder headerChecksum(Byte[] headerChecksum) {
+            this.headerChecksum = headerChecksum;
+            return this;
+        }
+
+        public PacketHeaderBuilder sourceIP(Byte[] sourceIP) {
+            this.sourceIP = sourceIP;
+            return this;
+        }
+
+        public PacketHeaderBuilder destinationIP(Byte[] destinationIP) {
+            this.destinationIP = destinationIP;
+            return this;
+        }
+
+        public PacketHeaderBuilder options(Byte[] options) {
+            this.options = options;
+            return this;
+        }
+
+        public PacketHeaderBuilder padding(Byte[] padding) {
+            this.padding = padding;
+            return this;
+        }
+
+        public PacketHeader build() {
+            return new PacketHeader(rawHeader, versionAndIHL, tos, totalLength, identification,
+                    flagsAndOffset, ttl, protocol, headerChecksum, sourceIP, destinationIP,
+                    options, padding);
+        }
+    }
+
+    public static PacketHeaderBuilder builder() {
+        return new PacketHeaderBuilder();
     }
 }
